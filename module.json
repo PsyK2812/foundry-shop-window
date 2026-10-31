@@ -25,8 +25,12 @@
       }
     ]
   },
-  "esmodules": ["scripts/main.mjs"],
-  "styles": ["styles/shop-window.css"],
+  "esmodules": [
+    "scripts/main.mjs"
+  ],
+  "styles": [
+    "styles/shop-window.css"
+  ],
   "languages": [
     {
       "lang": "en",
