@@ -48,7 +48,7 @@ If the merchant accepts items, a **Trade** button sits next to Buy. Click it, dr
 
 ## Selling (players)
 
-Click **Sell an item**, or drag an item from your sheet onto the shop window. Choose the item and quantity, optionally an asking price, and which character receives the coins. The GM types in what the merchant pays. The item moves into the merchant's stock as a hidden item.
+Click **Sell an item** (or drag an item onto the shop window) to open the sell window, then drag items from your character sheets into it. You can set a quantity for each item, an optional total asking price, who receives the coins and a message. The GM sets a price for each item; the total is shown live. The items move into the merchant's stock as hidden items.
 
 ## Notes
 

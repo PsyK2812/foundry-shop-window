@@ -279,3 +279,6 @@
 .shop-window-dialog .sw-offer-ul { list-style: none; padding: 0; margin: .2rem 0; }
 .shop-window-dialog .sw-offer-ul li { display: flex; align-items: center; gap: .4rem; margin: .15rem 0; }
 .shop-window-dialog .sw-li-img { width: 24px; height: 24px; border: none; }
+.shop-window-dialog .sw-dropzone.has-items { padding: .45rem; font-size: .85rem; }
+.shop-window-dialog .sw-sell-price { width: 5rem; flex: 0 0 5rem; }
+.shop-window-dialog .sw-approval .sw-offer-list { margin: .3rem 0; }

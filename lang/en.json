@@ -6,7 +6,7 @@
       "Listed": "Listed price",
       "ManualGold": "Automatic gold is off for this shop. Handle the coins by hand.",
       "NoAsking": "No asking price given.",
-      "Offer": "Your offer (gp total)",
+      "Offer": "Merchant pays",
       "PaidBy": "Paid by",
       "PaidTo": "Coins go to {actor}.",
       "Seller": "Seller",
@@ -119,7 +119,7 @@
       "PitchInDone": "You paid {amount} towards {item}.",
       "PitchInTimeout": "Nobody answered the pitch-in request for {item}. The purchase was cancelled.",
       "RequestSent": "Purchase request sent to the merchant.",
-      "SaleDeclined": "The merchant isn't interested in your {item}.",
+      "SaleDeclined": "The merchant isn't interested in your offer.",
       "SaleSent": "Offer sent to the merchant.",
       "ShopClosed": "That shop isn't open right now.",
       "Sold": "Sold {item} for {price}.",
@@ -138,14 +138,15 @@
       "Title": "Pitch in?"
     },
     "Sell": {
-      "Asking": "Asking price (gp)",
+      "Asking": "Asking price, total (gp)",
       "AskingHint": "optional",
-      "From": "Sell from",
-      "Intro": "Offer an item to {shop}. The GM decides what they'll pay.",
-      "Item": "Item",
-      "NoItems": "Nothing to sell",
+      "Intro": "Drag items from your character sheets into this window. The GM decides what {shop} pays.",
       "PayTo": "Coins go to",
-      "Title": "Sell to {shop}"
+      "Title": "Sell to {shop}",
+      "Offer": "Items to sell",
+      "ChoosePayee": "Choose who gets the coins…",
+      "Value": "Listed value: {value}",
+      "NoteHint": "e.g. \"Barely used!\""
     },
     "Settings": {
       "Approval": {
@@ -178,7 +179,8 @@
       "Note": "Message to the merchant (optional)",
       "NoteHint": "e.g. \"It's still sharp, I promise!\"",
       "NeedsApproval": "The GM decides whether the merchant accepts your trade.",
-      "OwnItemsOnly": "You can only offer items from characters you own."
+      "OwnItemsOnly": "You can only offer items from characters you own.",
+      "Listed": "listed {price}"
     }
   }
 }

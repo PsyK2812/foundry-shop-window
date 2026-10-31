@@ -481,17 +481,23 @@ async function gmExecuteTrade(req) {
 function validateSale(req) {
   const seller = game.users.get(req.senderId);
   const shop = resolve(req.shopUuid);
-  const actor = resolve(req.sellerUuid);
-  const item = actor?.items.get(req.itemId);
-  if (!seller || !shop || !actor || !item || !isMerch(item)) throw new Error(t("Error.ItemGone"));
-  if (!actor.testUserPermission(seller, "OWNER")) throw new Error(t("Error.BadPayer"));
-  const qty = Math.max(1, Math.floor(Number(req.qty) || 1));
-  if ((Number(item.system.quantity) || 0) < qty) throw new Error(t("Error.NotEnoughOwned", { item: item.name }));
+  if (!seller || !shop) throw new Error(t("Error.ItemGone"));
   const cfg = shopConfig(shop);
   if (!cfg.allowSelling) throw new Error(t("Error.NoSelling"));
-  let payee = resolve(req.payeeUuid) ?? actor;
-  if (!payee.testUserPermission(seller, "OWNER")) payee = actor;
-  return { seller, shop, actor, item, qty, payee, cfg };
+  const offered = [];
+  for (const o of req.offered ?? []) {
+    const actor = resolve(o.actorUuid);
+    const item = actor?.items.get(o.itemId);
+    if (!actor || !item || actor === shop || !isMerch(item)) throw new Error(t("Error.OfferGone"));
+    if (!actor.testUserPermission(seller, "OWNER")) throw new Error(t("Error.BadPayer"));
+    const qty = Math.max(1, Math.floor(Number(o.qty) || 1));
+    if ((Number(item.system.quantity) || 0) < qty) throw new Error(t("Error.NotEnoughOwned", { item: item.name }));
+    offered.push({ actor, item, qty });
+  }
+  if (!offered.length) throw new Error(t("Error.OfferGone"));
+  let payee = resolve(req.payeeUuid);
+  if (!payee || !payee.testUserPermission(seller, "OWNER")) payee = offered[0].actor;
+  return { seller, shop, offered, payee, cfg };
 }
 
 async function gmHandleSell(req) {
@@ -499,20 +505,28 @@ async function gmHandleSell(req) {
   try { v = validateSale(req); }
   catch (err) { return notify(req.senderId, err.message, "warn"); }
 
-  const base = baseUnitCp(v.item) * v.qty;
-  const suggested = req.askingCp > 0 ? req.askingCp : Math.round(base / 2);
+  const listedTotal = v.offered.reduce((s, o) => s + baseUnitCp(o.item) * o.qty, 0);
+  const rows = v.offered.map((o, i) => {
+    const listed = baseUnitCp(o.item) * o.qty;
+    // Suggest the asking price spread by value, otherwise half the listed value
+    const suggested = req.askingCp > 0
+      ? Math.round(listedTotal ? req.askingCp * listed / listedTotal : req.askingCp / v.offered.length)
+      : Math.round(listed / 2);
+    return `<div class="sw-offer-row">
+      <img src="${o.item.img}" alt="">
+      <span class="sw-pay-name">${o.qty}× ${escape(o.item.name)}<small>${escape(o.actor.name)} · ${t("Trade.Listed", { price: formatCp(listed) })}</small></span>
+      <input type="number" class="sw-sell-price" data-index="${i}" min="0" step="0.01" value="${cpToGp(suggested)}"> <span>gp</span>
+    </div>`;
+  }).join("");
+
   const content = `
     <div class="sw-approval">
-      <div class="sw-approval-item"><img src="${v.item.img}"><div>
-        <strong>${v.qty}× ${escape(v.item.name)}</strong><br>
-        ${t("Approval.Seller")}: ${escape(v.seller.name)} (${escape(v.actor.name)})
-      </div></div>
-      <p>${t("Approval.Listed")}: ${formatCp(base)}<br>
+      <p>${t("Approval.Seller")}: <strong>${escape(v.seller.name)}</strong></p>
+      <div class="sw-offer-list">${rows}</div>
+      <p>${t("Approval.Listed")}: ${formatCp(listedTotal)}<br>
       ${req.askingCp > 0 ? `${t("Approval.Asking")}: <strong>${formatCp(req.askingCp)}</strong>` : t("Approval.NoAsking")}</p>
-      <div class="form-group">
-        <label>${t("Approval.Offer")}</label>
-        <input type="number" name="gp" min="0" step="0.01" value="${cpToGp(suggested)}" autofocus>
-      </div>
+      ${req.note ? `<blockquote>${escape(req.note)}</blockquote>` : ""}
+      <p class="sw-total">${t("Approval.Offer")}: <strong data-sell-total></strong></p>
       ${v.cfg.autoGold ? `<p class="hint">${t("Approval.PaidTo", { actor: escape(v.payee.name) })}</p>`
         : `<p class="hint"><em>${t("Approval.ManualGold")}</em></p>`}
     </div>`;
@@ -520,36 +534,46 @@ async function gmHandleSell(req) {
   const result = await foundry.applications.api.DialogV2.wait({
     window: { title: t("Approval.TitleSell", { shop: v.shop.name }), icon: "fa-solid fa-scale-balanced" },
     classes: ["shop-window-dialog"],
+    position: { width: 460 },
     content, rejectClose: false,
+    render: (event, dialogOrEl) => {
+      const root = dialogOrEl instanceof HTMLElement ? dialogOrEl : dialogOrEl?.element;
+      if (!root) return;
+      const totalEl = root.querySelector("[data-sell-total]");
+      const sum = () => { totalEl.textContent = formatCp([...root.querySelectorAll(".sw-sell-price")].reduce((s, i) => s + gpToCp(i.value), 0)); };
+      root.addEventListener("input", ev => { if (ev.target.matches(".sw-sell-price")) sum(); });
+      sum();
+    },
     buttons: [
       { action: "approve", label: t("Button.Buy"), icon: "fa-solid fa-check", default: true,
-        callback: (event, button) => ({ cp: gpToCp(button.form.elements.gp.value) }) },
+        callback: (event, button) => ({ prices: [...button.form.querySelectorAll(".sw-sell-price")].map(i => Math.max(0, gpToCp(i.value))) }) },
       { action: "decline", label: t("Button.Decline"), icon: "fa-solid fa-xmark", callback: () => null }
     ]
   });
-  if (!result) return notify(req.senderId, t("Notify.SaleDeclined", { item: v.item.name }), "warn");
+  if (!result) return notify(req.senderId, t("Notify.SaleDeclined"), "warn");
 
   try { v = validateSale(req); }
   catch (err) { return notify(req.senderId, err.message, "warn"); }
 
-  const price = Math.max(0, result.cp);
+  const price = result.prices.reduce((s, p) => s + p, 0);
   if (v.cfg.autoGold && price > 0) {
     await v.payee.update({ "system.currency": add(v.payee.system.currency, price) });
   }
   // Into the shop: hidden until the GM reveals it
-  const stocked = await giveItem(v.shop, v.item, v.qty, null);
-  if (stocked && stocked.flags?.[MODULE_ID]?.hidden === undefined) {
-    await stocked.setFlag(MODULE_ID, "hidden", true);
+  for (const o of v.offered) {
+    const stocked = await giveItem(v.shop, o.item, o.qty, null);
+    if (stocked && stocked.flags?.[MODULE_ID]?.hidden === undefined) await stocked.setFlag(MODULE_ID, "hidden", true);
+    await takeItem(o.item, o.qty, false);
   }
-  await takeItem(v.item, v.qty, false);
 
-  notify(req.senderId, t("Notify.Sold", { item: `${v.qty}× ${v.item.name}`, price: formatCp(price) }));
+  const names = v.offered.map(o => `${o.qty}× ${o.item.name}`).join(", ");
+  notify(req.senderId, t("Notify.Sold", { item: names, price: formatCp(price) }));
   if (game.settings.get(MODULE_ID, "chatMessages")) {
+    const lines = v.offered.map((o, i) => `<li>${o.qty}× ${escape(o.item.name)}: <strong>${formatCp(result.prices[i] ?? 0)}</strong></li>`).join("");
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor: v.shop }),
-      content: `<div class="sw-chat"><img src="${v.item.img}"><p>${t("Chat.Sold", {
-        actor: `<strong>${escape(v.actor.name)}</strong>`, item: `<strong>${v.qty}× ${escape(v.item.name)}</strong>`,
-        price: `<strong>${formatCp(price)}</strong>` })}</p></div>`
+      content: `<p>${t("Chat.Sold", { actor: `<strong>${escape(v.payee.name)}</strong>`,
+        item: `<strong>${escape(names)}</strong>`, price: `<strong>${formatCp(price)}</strong>` })}</p><ul>${lines}</ul>`
     });
   }
 }
