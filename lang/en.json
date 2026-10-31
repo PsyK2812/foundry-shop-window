@@ -38,7 +38,8 @@
       "CancelPurchase": "Cancel purchase",
       "Trade": "Trade",
       "OfferTrade": "Offer trade",
-      "Accept": "Accept trade"
+      "Accept": "Accept trade",
+      "Reopen": "Back to {shop}"
     },
     "Buy": {
       "AskPitchIn": "Ask another player to pitch in",

@@ -32,6 +32,31 @@ function openShop(actorOrUuid) {
   return ShopWindow.open(shop);
 }
 
+/* -------------------------------------------- */
+/*  "Back to the shop" button for players        */
+/* -------------------------------------------- */
+
+/** Show a floating button for every open shop whose window the player has closed. */
+function refreshReopenBar() {
+  if (game.user.isGM || !game.ready) return;
+  let bar = document.getElementById("shop-window-reopen");
+  const closed = game.actors.filter(a => shopConfig(a).open && !ShopWindow.instances.has(a.uuid));
+  if (!closed.length) return bar?.remove();
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "shop-window-reopen";
+    document.body.append(bar);
+  }
+  bar.replaceChildren(...closed.map(shop => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.innerHTML = `<img src="${shop.img}" alt=""><span>${t("Button.Reopen", { shop: foundry.utils.escapeHTML?.(shop.name) ?? shop.name })}</span>`;
+    btn.addEventListener("click", () => ShopWindow.open(shop));
+    return btn;
+  }));
+}
+Hooks.on(`${MODULE_ID}.windowChanged`, () => setTimeout(refreshReopenBar, 0));
+
 Hooks.once("ready", () => {
   registerSocket();
   game.modules.get(MODULE_ID).api = { open: openShop, buyDialog, sellDialog, ShopWindow };
@@ -39,6 +64,7 @@ Hooks.once("ready", () => {
   // Players reconnecting while a shop is open get it back
   if (!game.user.isGM) {
     for (const actor of game.actors) if (shopConfig(actor).open) ShopWindow.open(actor);
+    refreshReopenBar();
   }
 });
 
@@ -57,6 +83,9 @@ Hooks.on(`${MODULE_ID}.close`, uuid => {
 Hooks.on("updateActor", (actor, changes) => {
   const app = ShopWindow.instances.get(actor.uuid);
   const openChange = foundry.utils.getProperty(changes, `flags.${MODULE_ID}.open`);
+  if (openChange !== undefined || foundry.utils.hasProperty(changes, "name") || foundry.utils.hasProperty(changes, "img")) {
+    setTimeout(refreshReopenBar, 0);
+  }
   if (!game.user.isGM && openChange === false) return app?.close();
   if (!game.user.isGM && openChange === true && !app) return ShopWindow.open(actor);
   app?.render();
@@ -64,7 +93,7 @@ Hooks.on("updateActor", (actor, changes) => {
 for (const hook of ["createItem", "updateItem", "deleteItem"]) {
   Hooks.on(hook, item => { if (item.parent instanceof Actor) ShopWindow.rerender(item.parent); });
 }
-Hooks.on("deleteActor", actor => ShopWindow.instances.get(actor.uuid)?.close());
+Hooks.on("deleteActor", actor => { ShopWindow.instances.get(actor.uuid)?.close(); setTimeout(refreshReopenBar, 0); });
 
 /* Header button on actor sheets (GM only) */
 function addHeaderControl(app, controls) {

@@ -52,6 +52,7 @@ Click **Sell an item** (or drag an item onto the shop window) to open the sell w
 
 ## Notes
 
+- Players who close the window get a "Back to …" button at the top of the screen while the shop is open.
 - A GM has to be online to trade, because all changes run on the GM's client.
 - Pitch-in requests expire after 3 minutes.
 - Item prices come from the dnd5e price field (value + denomination).

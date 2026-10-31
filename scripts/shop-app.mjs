@@ -67,7 +67,9 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async close(options) {
     ShopWindow.instances.delete(this.shop.uuid);
-    return super.close(options);
+    const result = await super.close(options);
+    Hooks.callAll(`${MODULE_ID}.windowChanged`);
+    return result;
   }
 
   async _prepareContext() {
@@ -116,6 +118,7 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _onRender(context, options) {
     super._onRender?.(context, options);
+    if (options?.isFirstRender) Hooks.callAll(`${MODULE_ID}.windowChanged`);
     const el = this.element;
     // GM inputs
     el.querySelectorAll("input[name]").forEach(input => input.addEventListener("change", ev => this.#onInput(ev)));

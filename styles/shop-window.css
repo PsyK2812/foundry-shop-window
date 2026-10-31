@@ -309,3 +309,33 @@
 .shop-window .sw-gm-bar input[type=checkbox]:checked::before { transform: scale(1); }
 .shop-window .sw-gm-bar input[type=checkbox]:focus-visible { outline: 2px solid var(--sw-gold); outline-offset: 2px; }
 .shop-window .sw-gm-bar input[type=checkbox]::after { display: none; }
+
+/* Floating "Back to the shop" button for players */
+#shop-window-reopen {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  gap: .5rem;
+  pointer-events: none;
+}
+#shop-window-reopen button {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: .5rem;
+  width: auto; height: auto;
+  padding: .3rem .9rem .3rem .3rem;
+  border-radius: 999px;
+  border: 2px solid #c9a227;
+  background: linear-gradient(180deg, #7a4a26, #4a2e1a);
+  color: #f3e9d2;
+  font-size: 1rem;
+  font-weight: bold;
+  box-shadow: 0 3px 10px rgba(0,0,0,.6);
+  cursor: pointer;
+  animation: sw-pulse 2.4s ease-in-out infinite;
+}
+#shop-window-reopen button:hover { filter: brightness(1.15); animation: none; }
+#shop-window-reopen img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #c9a227; object-fit: cover; object-position: top; }
+@keyframes sw-pulse { 0%, 100% { box-shadow: 0 3px 10px rgba(0,0,0,.6); } 50% { box-shadow: 0 0 14px rgba(201,162,39,.8); } }
