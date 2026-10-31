@@ -282,3 +282,30 @@
 .shop-window-dialog .sw-dropzone.has-items { padding: .45rem; font-size: .85rem; }
 .shop-window-dialog .sw-sell-price { width: 5rem; flex: 0 0 5rem; }
 .shop-window-dialog .sw-approval .sw-offer-list { margin: .3rem 0; }
+
+/* Readable checkboxes in the GM bar (Foundry's dark theme draws them dark-on-dark) */
+.shop-window .sw-gm-bar input[type=checkbox] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 18px;
+  width: 18px; height: 18px;
+  margin: 0;
+  border: 2px solid var(--sw-parchment-dark);
+  border-radius: 3px;
+  background: var(--sw-parchment);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+}
+.shop-window .sw-gm-bar input[type=checkbox]::before {
+  content: "";
+  width: 10px; height: 10px;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background: var(--sw-ink);
+  transform: scale(0);
+  transition: transform .1s ease-in-out;
+}
+.shop-window .sw-gm-bar input[type=checkbox]:checked { background: var(--sw-gold); border-color: var(--sw-gold); }
+.shop-window .sw-gm-bar input[type=checkbox]:checked::before { transform: scale(1); }
+.shop-window .sw-gm-bar input[type=checkbox]:focus-visible { outline: 2px solid var(--sw-gold); outline-offset: 2px; }
+.shop-window .sw-gm-bar input[type=checkbox]::after { display: none; }
