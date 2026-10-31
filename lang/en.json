@@ -1,0 +1,144 @@
+{
+  "SHOPWINDOW": {
+    "Approval": {
+      "Asking": "Asking price",
+      "Buyer": "Buyer",
+      "Listed": "Listed price",
+      "ManualGold": "Automatic gold is off for this shop. Handle the coins by hand.",
+      "NoAsking": "No asking price given.",
+      "Offer": "Your offer (gp total)",
+      "PaidBy": "Paid by",
+      "PaidTo": "Coins go to {actor}.",
+      "Seller": "Seller",
+      "TitleBuy": "Purchase request: {shop}",
+      "TitleSell": "Sale offer: {shop}",
+      "Total": "Total"
+    },
+    "Button": {
+      "Approve": "Approve",
+      "Buy": "Buy",
+      "Cancel": "Cancel",
+      "CloseForPlayers": "Close for players",
+      "Decline": "Decline",
+      "Hide": "Hide from players",
+      "HideAll": "Hide all",
+      "Offer": "Offer to merchant",
+      "OpenForPlayers": "Open for players",
+      "OpenShop": "Open Shop Window",
+      "Pay": "Pay",
+      "PlayerView": "Player view",
+      "PlayerViewHint": "Preview the shop exactly as the players see it",
+      "Reveal": "Reveal to players",
+      "RevealAll": "Reveal all",
+      "Sell": "Sell an item",
+      "Sheet": "Open merchant sheet"
+    },
+    "Buy": {
+      "AskPitchIn": "Ask another player to pitch in",
+      "Container": "Put it in",
+      "Covered": "Fully paid ✓",
+      "DeliverTo": "Deliver to",
+      "Each": "{price} each",
+      "Has": "has {amount}",
+      "MainInventory": "Main inventory",
+      "ManualGold": "Coins aren't deducted automatically in this shop. Settle payment with the GM.",
+      "NeedsApproval": "The GM approves the purchase before it goes through.",
+      "NoOthers": "No other players are online to pitch in.",
+      "PayAllHint": "Pay the rest from this character",
+      "Payment": "Payment",
+      "Quantity": "Quantity",
+      "Remaining": "Still to pay: {amount}",
+      "Remove": "Remove",
+      "Title": "Buy {item}",
+      "TooMuch": "Overpaying by {amount}",
+      "Total": "Total"
+    },
+    "Chat": {
+      "Bought": "{actor} bought {item} for {price}.",
+      "Sold": "{actor} sold {item} for {price}."
+    },
+    "Error": {
+      "BadPayer": "You can only pay with characters you own.",
+      "BadRecipient": "You can only deliver items to characters you own.",
+      "CantAfford": "{actor} doesn't have enough coins.",
+      "ItemGone": "That item is no longer available.",
+      "NoSelling": "This merchant isn't buying anything right now.",
+      "NotEnoughOwned": "You don't have that many {item}.",
+      "NotEnoughStock": "Not enough {item} in stock.",
+      "WrongAmount": "The payments don't add up to {total}."
+    },
+    "Label": {
+      "AllowSelling": "Players can sell",
+      "AutoGold": "Automatic gold",
+      "ClosedForPlayers": "Closed for players",
+      "DropHint": "Drop items here to stock the shop.",
+      "Empty": "The stall is empty… for now.",
+      "EmptyGM": "No stock yet. Drag items onto this window or onto the merchant actor.",
+      "Hidden": "hidden",
+      "ItemDiscount": "Item discount",
+      "ItemDiscountHint": "Discount on this item in %. Stacks with the shop discount. A negative value is a markup.",
+      "MarkupBadge": "Prices +{pct}%",
+      "NoDescription": "No description.",
+      "RequireApproval": "GM approves purchases",
+      "SaleBadge": "{pct}% off everything!",
+      "SellHint": "…or drag an item from your sheet onto this window.",
+      "ShopDiscount": "Shop discount",
+      "ShopDiscountHint": "Discount on everything in %. A negative value is a markup.",
+      "SoldOut": "Sold out",
+      "Stock": "Stock",
+      "Unlimited": "Unlimited stock"
+    },
+    "Notify": {
+      "Bought": "{item} added to {actor}.",
+      "Declined": "The merchant declined your purchase of {item}.",
+      "NoActors": "You don't own a character that can trade.",
+      "NoGM": "A GM needs to be online to trade.",
+      "NoShop": "Shop Window: actor not found.",
+      "NotMerch": "That item can't be sold (it has no price or quantity).",
+      "Opened": "{shop} is now open for the players.",
+      "PitchInDeclined": "{user} declined to pitch in. The purchase was cancelled.",
+      "PitchInDone": "You paid {amount} towards {item}.",
+      "PitchInTimeout": "Nobody answered the pitch-in request for {item}. The purchase was cancelled.",
+      "RequestSent": "Purchase request sent to the merchant.",
+      "SaleDeclined": "The merchant isn't interested in your {item}.",
+      "SaleSent": "Offer sent to the merchant.",
+      "ShopClosed": "That shop isn't open right now.",
+      "Sold": "Sold {item} for {price}.",
+      "WaitingPitchIn": "Waiting for the other players to pitch in…"
+    },
+    "PitchIn": {
+      "Ask": "{user} asks you to pitch in {amount} for {item} at {shop}.",
+      "CantAfford": "None of your characters can afford that.",
+      "PayFrom": "Pay from",
+      "Title": "Pitch in?"
+    },
+    "Sell": {
+      "Asking": "Asking price (gp)",
+      "AskingHint": "optional",
+      "From": "Sell from",
+      "Intro": "Offer an item to {shop}. The GM decides what they'll pay.",
+      "Item": "Item",
+      "NoItems": "Nothing to sell",
+      "PayTo": "Coins go to",
+      "Title": "Sell to {shop}"
+    },
+    "Settings": {
+      "Approval": {
+        "Hint": "Default for new shops: the GM has to approve each purchase. You can change this per shop.",
+        "Name": "GM approves purchases"
+      },
+      "AutoGold": {
+        "Hint": "Default for new shops: coins are taken from (and paid to) characters automatically. You can change this per shop.",
+        "Name": "Automatic gold"
+      },
+      "Chat": {
+        "Hint": "Post a chat message for every purchase and sale.",
+        "Name": "Chat messages"
+      },
+      "HideNew": {
+        "Hint": "Items you haven't toggled yet are hidden from players until you reveal them.",
+        "Name": "Hide items by default"
+      }
+    }
+  }
+}

@@ -1,0 +1,90 @@
+<div class="sw-stall {{#if gmView}}sw-gm{{/if}}">
+  <div class="sw-awning" aria-hidden="true"><span></span></div>
+
+  <header class="sw-merchant">
+    <div class="sw-portrait"><img src="{{shop.img}}" alt="{{shop.name}}"></div>
+    <div class="sw-sign">
+      <h1>{{shop.name}}</h1>
+      {{#if discountText}}<div class="sw-badge {{discountClass}}">{{discountText}}</div>{{/if}}
+      {{#unless cfg.open}}{{#if isGM}}<div class="sw-closed">{{localize "SHOPWINDOW.Label.ClosedForPlayers"}}</div>{{/if}}{{/unless}}
+    </div>
+  </header>
+
+  {{#if isGM}}
+  <section class="sw-gm-bar">
+    <div class="sw-gm-row">
+      {{#if cfg.open}}
+      <button type="button" data-action="closePlayers" class="sw-open-btn active"><i class="fa-solid fa-door-closed"></i> {{localize "SHOPWINDOW.Button.CloseForPlayers"}}</button>
+      {{else}}
+      <button type="button" data-action="openPlayers" class="sw-open-btn"><i class="fa-solid fa-door-open"></i> {{localize "SHOPWINDOW.Button.OpenForPlayers"}}</button>
+      {{/if}}
+      <button type="button" data-action="togglePlayerView" data-tooltip="{{localize "SHOPWINDOW.Button.PlayerViewHint"}}" class="{{#unless gmView}}active{{/unless}}"><i class="fa-solid fa-eye"></i> {{localize "SHOPWINDOW.Button.PlayerView"}}</button>
+      <button type="button" data-action="openSheet" data-tooltip="{{localize "SHOPWINDOW.Button.Sheet"}}"><i class="fa-solid fa-user"></i></button>
+    </div>
+    {{#if gmView}}
+    <div class="sw-gm-row sw-settings">
+      <label data-tooltip="{{localize "SHOPWINDOW.Label.ShopDiscountHint"}}">{{localize "SHOPWINDOW.Label.ShopDiscount"}}
+        <input type="number" name="shopDiscount" value="{{cfg.discount}}" step="1" max="100"> %</label>
+      <label><input type="checkbox" name="autoGold" {{checked cfg.autoGold}}> {{localize "SHOPWINDOW.Label.AutoGold"}}</label>
+      <label><input type="checkbox" name="requireApproval" {{checked cfg.requireApproval}}> {{localize "SHOPWINDOW.Label.RequireApproval"}}</label>
+      <label><input type="checkbox" name="allowSelling" {{checked cfg.allowSelling}}> {{localize "SHOPWINDOW.Label.AllowSelling"}}</label>
+    </div>
+    <div class="sw-gm-row">
+      <button type="button" data-action="revealAll"><i class="fa-solid fa-eye"></i> {{localize "SHOPWINDOW.Button.RevealAll"}}</button>
+      <button type="button" data-action="hideAll"><i class="fa-solid fa-eye-slash"></i> {{localize "SHOPWINDOW.Button.HideAll"}}</button>
+      <span class="sw-hint">{{localize "SHOPWINDOW.Label.DropHint"}}</span>
+    </div>
+    {{/if}}
+  </section>
+  {{/if}}
+
+  <div class="sw-counter" aria-hidden="true"></div>
+
+  <ol class="sw-items">
+    {{#each items}}
+    <li class="sw-item {{#if hidden}}is-hidden{{/if}} {{#if soldOut}}sold-out{{/if}} {{#if expanded}}expanded{{/if}}" data-item-id="{{id}}">
+      <div class="sw-item-row">
+        <img class="sw-item-img" src="{{img}}" alt="">
+        <div class="sw-item-name" data-action="toggleExpand">
+          <span class="name">{{name}}</span>
+          <span class="sub">{{typeLabel}}{{#if hidden}} · <i class="fa-solid fa-eye-slash"></i> {{localize "SHOPWINDOW.Label.Hidden"}}{{/if}}</span>
+        </div>
+
+        {{#if ../gmView}}
+        <label class="sw-field" data-tooltip="{{localize "SHOPWINDOW.Label.Stock"}}">
+          <i class="fa-solid fa-boxes-stacked"></i>
+          {{#if unlimited}}<span class="sw-inf">∞</span>{{else}}<input type="number" name="stock" value="{{quantity}}" min="0" step="1">{{/if}}
+        </label>
+        <label class="sw-field" data-tooltip="{{localize "SHOPWINDOW.Label.ItemDiscountHint"}}">
+          <i class="fa-solid fa-tag"></i><input type="number" name="itemDiscount" value="{{discount}}" step="1" max="100">%
+        </label>
+        <button type="button" class="sw-icon {{#if unlimited}}active{{/if}}" data-action="toggleUnlimited" data-tooltip="{{localize "SHOPWINDOW.Label.Unlimited"}}"><i class="fa-solid fa-infinity"></i></button>
+        <button type="button" class="sw-icon sw-eye {{#if hidden}}off{{/if}}" data-action="toggleHidden" data-tooltip="{{#if hidden}}{{localize "SHOPWINDOW.Button.Reveal"}}{{else}}{{localize "SHOPWINDOW.Button.Hide"}}{{/if}}">
+          <i class="fa-solid {{#if hidden}}fa-eye-slash{{else}}fa-eye{{/if}}"></i></button>
+        {{else}}
+        <span class="sw-stock">{{#if unlimited}}{{else}}{{#if soldOut}}{{localize "SHOPWINDOW.Label.SoldOut"}}{{else}}×{{quantity}}{{/if}}{{/if}}</span>
+        {{/if}}
+
+        <div class="sw-price">
+          {{#if discounted}}<s>{{basePrice}}</s>{{/if}}
+          <span class="final">{{finalPrice}}</span>
+        </div>
+
+        {{#unless ../gmView}}
+        <button type="button" class="sw-buy" data-action="buy" {{#if soldOut}}disabled{{/if}}><i class="fa-solid fa-cart-shopping"></i> {{localize "SHOPWINDOW.Button.Buy"}}</button>
+        {{/unless}}
+      </div>
+      <div class="sw-desc">{{{description}}}</div>
+    </li>
+    {{else}}
+    <li class="sw-empty">{{#if ../gmView}}{{localize "SHOPWINDOW.Label.EmptyGM"}}{{else}}{{localize "SHOPWINDOW.Label.Empty"}}{{/if}}</li>
+    {{/each}}
+  </ol>
+
+  {{#unless gmView}}{{#if cfg.allowSelling}}
+  <footer class="sw-footer">
+    <button type="button" data-action="sell"><i class="fa-solid fa-hand-holding-dollar"></i> {{localize "SHOPWINDOW.Button.Sell"}}</button>
+    <span class="sw-hint">{{localize "SHOPWINDOW.Label.SellHint"}}</span>
+  </footer>
+  {{/if}}{{/unless}}
+</div>
