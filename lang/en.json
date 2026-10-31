@@ -130,7 +130,8 @@
       "TradeSent": "Trade offer sent to the merchant.",
       "TradeDeclined": "The merchant turned down your trade for {item}.",
       "TradeCancelled": "The trade for {item} was cancelled. Nothing changed hands.",
-      "Traded": "Trade done! {item} added to {actor}."
+      "Traded": "Trade done! {item} added to {actor}.",
+      "AllClosed": "All shops are closed for the players."
     },
     "PitchIn": {
       "Ask": "{user} asks you to pitch in {amount} for {item} at {shop}.",
@@ -182,6 +183,12 @@
       "NeedsApproval": "The GM decides whether the merchant accepts your trade.",
       "OwnItemsOnly": "You can only offer items from characters you own.",
       "Listed": "listed {price}"
+    },
+    "GMBar": {
+      "OneOpen": "1 shop open",
+      "ManyOpen": "{n} shops open",
+      "Manage": "Open the GM view of this shop",
+      "CloseAll": "Close all shops"
     }
   }
 }

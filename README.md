@@ -52,6 +52,7 @@ Click **Sell an item** (or drag an item onto the shop window) to open the sell w
 
 ## Notes
 
+- GMs see a "N shops open" button at the top of the screen whenever a shop is open. Click it for the list: open the GM view of a shop, close one, or **Close all shops**. Macro: `game.modules.get("shop-window").api.closeAll()`.
 - Players who close the window get a "Back to …" button at the top of the screen while the shop is open.
 - A GM has to be online to trade, because all changes run on the GM's client.
 - Pitch-in requests expire after 3 minutes.

@@ -339,3 +339,54 @@
 #shop-window-reopen button:hover { filter: brightness(1.15); animation: none; }
 #shop-window-reopen img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #c9a227; object-fit: cover; object-position: top; }
 @keyframes sw-pulse { 0%, 100% { box-shadow: 0 3px 10px rgba(0,0,0,.6); } 50% { box-shadow: 0 0 14px rgba(201,162,39,.8); } }
+
+/* GM overview of open shops */
+#shop-window-gm {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #f3e9d2;
+  font-family: var(--font-primary, sans-serif);
+}
+#shop-window-gm button { cursor: pointer; }
+#shop-window-gm .sw-gm-pill {
+  display: flex; align-items: center; gap: .5rem;
+  width: auto; height: auto;
+  padding: .35rem 1rem;
+  border-radius: 999px;
+  border: 2px solid #c9a227;
+  background: linear-gradient(180deg, #7a4a26, #4a2e1a);
+  color: #f3e9d2;
+  font-weight: bold;
+  box-shadow: 0 3px 10px rgba(0,0,0,.6);
+}
+#shop-window-gm .sw-gm-panel {
+  display: none;
+  margin-top: .35rem;
+  min-width: 260px;
+  padding: .4rem;
+  border-radius: 8px;
+  border: 2px solid #c9a227;
+  background: rgba(40, 24, 12, .96);
+  box-shadow: 0 4px 14px rgba(0,0,0,.6);
+  flex-direction: column;
+  gap: .3rem;
+}
+#shop-window-gm.expanded .sw-gm-panel { display: flex; }
+#shop-window-gm .sw-gm-shop { display: flex; align-items: center; gap: .45rem; }
+#shop-window-gm .sw-gm-shop img { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #c9a227; object-fit: cover; object-position: top; }
+#shop-window-gm .sw-gm-shop span { flex: 1; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#shop-window-gm .sw-gm-shop button {
+  flex: 0 0 28px; width: 28px; height: 28px; padding: 0; line-height: 1;
+  background: #f3e9d2; color: #2b1d12; border: 1px solid #4a2e1a; border-radius: 4px;
+}
+#shop-window-gm .sw-gm-shop button[data-sw="close"] { background: #a33; color: #fff; }
+#shop-window-gm .sw-close-all {
+  margin-top: .2rem; width: 100%; height: 30px;
+  background: #a33; color: #fff; border: 1px solid #611; border-radius: 4px; font-weight: bold;
+}

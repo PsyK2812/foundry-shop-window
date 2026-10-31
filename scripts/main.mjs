@@ -1,7 +1,7 @@
 import { ShopWindow } from "./shop-app.mjs";
 import { buyDialog, sellDialog } from "./dialogs.mjs";
 import { MODULE_ID, resolve, shopConfig, t } from "./shop.mjs";
-import { registerSocket } from "./transactions.mjs";
+import { broadcast, registerSocket } from "./transactions.mjs";
 
 Hooks.once("init", () => {
   const reg = (key, data) => game.settings.register(MODULE_ID, key, { scope: "world", config: true, ...data });
@@ -38,7 +38,8 @@ function openShop(actorOrUuid) {
 
 /** Show a floating button for every open shop whose window the player has closed. */
 function refreshReopenBar() {
-  if (game.user.isGM || !game.ready) return;
+  if (!game.ready) return;
+  if (game.user.isGM) return refreshGMBar();
   let bar = document.getElementById("shop-window-reopen");
   const closed = game.actors.filter(a => shopConfig(a).open && !ShopWindow.instances.has(a.uuid));
   if (!closed.length) return bar?.remove();
@@ -55,11 +56,69 @@ function refreshReopenBar() {
     return btn;
   }));
 }
+/* -------------------------------------------- */
+/*  GM overview of open shops                    */
+/* -------------------------------------------- */
+
+const openShops = () => game.actors.filter(a => shopConfig(a).open).sort((a, b) => a.name.localeCompare(b.name));
+
+async function closeShop(shop) {
+  await shop.setFlag(MODULE_ID, "open", false);
+  broadcast({ action: "close", shopUuid: shop.uuid });
+}
+
+async function closeAllShops() {
+  for (const shop of openShops()) await closeShop(shop);
+  ui.notifications.info(t("Notify.AllClosed"));
+}
+
+let gmPanelExpanded = false;
+
+function refreshGMBar() {
+  let bar = document.getElementById("shop-window-gm");
+  const shops = openShops();
+  if (!shops.length) { gmPanelExpanded = false; return bar?.remove(); }
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "shop-window-gm";
+    document.body.append(bar);
+  }
+  const esc = s => foundry.utils.escapeHTML?.(s) ?? s;
+  bar.classList.toggle("expanded", gmPanelExpanded);
+  bar.innerHTML = `
+    <button type="button" class="sw-gm-pill" data-sw="toggle">
+      <i class="fa-solid fa-store"></i> ${t(shops.length === 1 ? "GMBar.OneOpen" : "GMBar.ManyOpen", { n: shops.length })}
+      <i class="fa-solid ${gmPanelExpanded ? "fa-chevron-up" : "fa-chevron-down"}"></i>
+    </button>
+    <div class="sw-gm-panel">
+      ${shops.map(s => `
+        <div class="sw-gm-shop" data-uuid="${s.uuid}">
+          <img src="${s.img}" alt="">
+          <span>${esc(s.name)}</span>
+          <button type="button" data-sw="manage" data-tooltip="${t("GMBar.Manage")}"><i class="fa-solid fa-store"></i></button>
+          <button type="button" data-sw="close" data-tooltip="${t("Button.CloseForPlayers")}"><i class="fa-solid fa-door-closed"></i></button>
+        </div>`).join("")}
+      <button type="button" class="sw-close-all" data-sw="closeAll"><i class="fa-solid fa-door-closed"></i> ${t("GMBar.CloseAll")}</button>
+    </div>`;
+  bar.onclick = ev => {
+    const btn = ev.target.closest("[data-sw]");
+    if (!btn) return;
+    const shop = fromUuidSync(btn.closest("[data-uuid]")?.dataset.uuid ?? "");
+    switch (btn.dataset.sw) {
+      case "toggle": gmPanelExpanded = !gmPanelExpanded; return refreshGMBar();
+      case "manage": return shop && ShopWindow.open(shop);
+      case "close": return shop && closeShop(shop);
+      case "closeAll": return closeAllShops();
+    }
+  };
+}
+
 Hooks.on(`${MODULE_ID}.windowChanged`, () => setTimeout(refreshReopenBar, 0));
 
 Hooks.once("ready", () => {
   registerSocket();
-  game.modules.get(MODULE_ID).api = { open: openShop, buyDialog, sellDialog, ShopWindow };
+  game.modules.get(MODULE_ID).api = { open: openShop, closeAll: closeAllShops, openShops, buyDialog, sellDialog, ShopWindow };
+  if (game.user.isGM) refreshGMBar();
 
   // Players reconnecting while a shop is open get it back
   if (!game.user.isGM) {
