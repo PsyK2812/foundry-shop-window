@@ -31,7 +31,9 @@
       "Reveal": "Reveal to players",
       "RevealAll": "Reveal all",
       "Sell": "Sell an item",
-      "Sheet": "Open merchant sheet"
+      "Sheet": "Open merchant sheet",
+      "Deliver": "Put it here",
+      "CancelPurchase": "Cancel purchase"
     },
     "Buy": {
       "AskPitchIn": "Ask another player to pitch in",
@@ -54,7 +56,8 @@
       "Total": "Total",
       "ChooseRecipient": "Choose who gets it…",
       "YourCharacters": "Your characters",
-      "OtherCharacters": "Party & other characters"
+      "OtherCharacters": "Party & other characters",
+      "DestinationLater": "You'll pick which inventory it goes to once the purchase is approved."
     },
     "Chat": {
       "Bought": "{actor} bought {item} for {price}.",
@@ -107,7 +110,9 @@
       "SaleSent": "Offer sent to the merchant.",
       "ShopClosed": "That shop isn't open right now.",
       "Sold": "Sold {item} for {price}.",
-      "WaitingPitchIn": "Waiting for the other players to pitch in…"
+      "WaitingPitchIn": "Waiting for the other players to pitch in…",
+      "PurchaseCancelled": "The purchase of {item} was cancelled. Nothing was paid.",
+      "DestinationTimeout": "No inventory was chosen for {item} in time. The purchase was cancelled and nothing was paid."
     },
     "PitchIn": {
       "Ask": "{user} asks you to pitch in {amount} for {item} at {shop}.",
@@ -142,6 +147,10 @@
         "Hint": "Items you haven't toggled yet are hidden from players until you reveal them.",
         "Name": "Hide items by default"
       }
+    },
+    "Destination": {
+      "Title": "Where should it go?",
+      "Intro": "Your purchase was approved. Choose which inventory it goes into."
     }
   }
 }

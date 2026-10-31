@@ -1,11 +1,12 @@
 import { add, cpToGp, deduct, formatCp, gpToCp } from "./currency.mjs";
 import {
-  MODULE_ID, baseUnitCp, canDeliverTo, escape, giveItem, isMerch, itemConfig, priceCp, resolve, shopConfig,
+  MODULE_ID, baseUnitCp, canDeliverTo, containersOf, deliveryTargets, escape, giveItem, isMerch, itemConfig, priceCp, resolve, shopConfig,
   stockOf, t, takeItem, walletCp
 } from "./shop.mjs";
 
 const CHANNEL = `module.${MODULE_ID}`;
 const PITCH_IN_TIMEOUT = 3 * 60 * 1000;
+const DESTINATION_TIMEOUT = 10 * 60 * 1000;
 
 /** Pending purchases waiting for pitch-ins (only on the GM client). */
 const pending = new Map();
@@ -46,6 +47,8 @@ async function receive(msg) {
       case "sell": return gmHandleSell(msg);
       case "pitchInAsk": return playerAnswerPitchIn(msg);
       case "pitchInReply": return gmHandlePitchInReply(msg);
+      case "chooseDestination": return playerChooseDestination(msg);
+      case "destinationReply": return gmHandleDestination(msg);
     }
   } catch (err) {
     console.error(`${MODULE_ID} |`, err);
@@ -115,6 +118,59 @@ async function playerAnswerPitchIn(msg) {
   send("gm", { action: "pitchInReply", requestId: msg.requestId, userId: game.user.id, ...result });
 }
 
+/** The purchase went through: ask the buyer where the item should go. */
+async function playerChooseDestination(msg) {
+  const { DialogV2 } = foundry.applications.api;
+  const shop = resolve(msg.shopUuid);
+  const targets = deliveryTargets(game.user, shop);
+  const optList = list => list.map(a => `<option value="${a.uuid}">${escape(a.name)}</option>`).join("");
+  const containerOptions = actor => `<option value="">${t("Buy.MainInventory")}</option>` +
+    containersOf(actor).map(c => `<option value="${c.id}">${escape(c.name)}</option>`).join("");
+
+  const content = `
+    <div class="sw-dialog">
+      <div class="sw-approval-item"><img src="${msg.itemImg}"><div>
+        <strong>${escape(msg.itemName)}</strong><br>${t("Destination.Intro")}
+      </div></div>
+      <div class="form-group"><label>${t("Buy.DeliverTo")}</label><select name="recipient">
+        <option value="" selected disabled>${t("Buy.ChooseRecipient")}</option>
+        ${targets.own.length ? `<optgroup label="${t("Buy.YourCharacters")}">${optList(targets.own)}</optgroup>` : ""}
+        ${targets.others.length ? `<optgroup label="${t("Buy.OtherCharacters")}">${optList(targets.others)}</optgroup>` : ""}
+      </select></div>
+      <div class="form-group sw-container-group" hidden><label>${t("Buy.Container")}</label><select name="container"></select></div>
+    </div>`;
+
+  let readState = () => null;
+  const render = (event, dialogOrEl) => {
+    const root = dialogOrEl instanceof HTMLElement ? dialogOrEl : dialogOrEl?.element;
+    if (!root) return;
+    const recipient = root.querySelector("[name=recipient]");
+    const container = root.querySelector("[name=container]");
+    const group = root.querySelector(".sw-container-group");
+    const confirm = root.querySelector('button[data-action="deliver"]');
+    if (confirm) confirm.disabled = true;
+    recipient.addEventListener("change", () => {
+      const actor = fromUuidSync(recipient.value);
+      container.innerHTML = containerOptions(actor);
+      group.hidden = !actor;
+      if (confirm) confirm.disabled = !actor;
+    });
+    readState = () => recipient.value ? { recipientUuid: recipient.value, containerId: container.value || null } : null;
+  };
+
+  const result = await DialogV2.wait({
+    window: { title: t("Destination.Title"), icon: "fa-solid fa-box-open" },
+    classes: ["shop-window-dialog"],
+    position: { width: 420 },
+    content, render, rejectClose: false,
+    buttons: [
+      { action: "deliver", label: t("Button.Deliver"), icon: "fa-solid fa-check", default: true, callback: () => readState() },
+      { action: "cancel", label: t("Button.CancelPurchase"), icon: "fa-solid fa-xmark", callback: () => null }
+    ]
+  });
+  send("gm", { action: "destinationReply", requestId: msg.requestId, ...(result ?? { cancelled: true }) });
+}
+
 /* -------------------------------------------- */
 /*  GM side: purchases                           */
 /* -------------------------------------------- */
@@ -130,9 +186,12 @@ function validatePurchase(req) {
   if (!buyer.isGM && itemConfig(item).hidden) throw new Error(t("Error.ItemGone"));
   if (stockOf(item) < qty) throw new Error(t("Error.NotEnoughStock", { item: item.name }));
 
-  const recipient = resolve(req.recipientUuid);
-  if (!recipient || !canDeliverTo(recipient, buyer)) throw new Error(t("Error.BadRecipient"));
-  if (req.containerId && recipient.items.get(req.containerId)?.type !== "container") req.containerId = null;
+  let recipient = null;
+  if (req.recipientUuid) {
+    recipient = resolve(req.recipientUuid);
+    if (!recipient || !canDeliverTo(recipient, buyer)) throw new Error(t("Error.BadRecipient"));
+    if (req.containerId && recipient.items.get(req.containerId)?.type !== "container") req.containerId = null;
+  }
 
   const total = priceCp(shop, item, qty);
   const payers = [];
@@ -190,7 +249,7 @@ async function gmHandleBuy(req) {
 
 async function gmHandlePitchInReply(msg) {
   const req = pending.get(msg.requestId);
-  if (!req) return;
+  if (!req || req.stage === "destination") return;
   const p = req.pitchIns.find(p => p.userId === msg.senderId && p.status === "waiting");
   if (!p) return;
   if (!msg.accepted) {
@@ -228,7 +287,7 @@ async function gmFinalizeBuy(req) {
       <div class="sw-approval">
         <div class="sw-approval-item"><img src="${v.item.img}"><div>
           <strong>${v.qty}× ${escape(v.item.name)}</strong><br>
-          ${t("Approval.Buyer")}: ${escape(v.buyer.name)} → ${escape(v.recipient.name)}
+          ${t("Approval.Buyer")}: ${escape(v.buyer.name)}
         </div></div>
         <p>${t("Approval.Listed")}: ${formatCp(base)}${discounts.length ? ` (${discounts.join(", ")})` : ""}<br>
         <strong>${t("Approval.Total")}: ${formatCp(v.total)}</strong></p>
@@ -247,6 +306,42 @@ async function gmFinalizeBuy(req) {
     try { v = validatePurchase(req); } // something might have changed while the dialog was open
     catch (err) { return notify(req.senderId, err.message, "warn"); }
   }
+
+  // Ask the buyer where the item should go. Nothing is charged until they answer.
+  req.stage = "destination";
+  pending.set(req.requestId, req);
+  req.timer = setTimeout(() => {
+    if (!pending.delete(req.requestId)) return;
+    cancelPurchase(req, t("Notify.DestinationTimeout", { item: v.item.name }));
+  }, DESTINATION_TIMEOUT);
+  send(req.senderId, {
+    action: "chooseDestination", requestId: req.requestId, shopUuid: req.shopUuid,
+    itemName: `${v.qty}× ${v.item.name}`, itemImg: v.item.img
+  });
+}
+
+function cancelPurchase(req, message) {
+  notify(req.senderId, message, "warn");
+  for (const p of req.pitchIns ?? []) if (p.status === "accepted" && p.userId !== req.senderId) notify(p.userId, message, "warn");
+}
+
+async function gmHandleDestination(msg) {
+  const req = pending.get(msg.requestId);
+  if (!req || req.stage !== "destination" || msg.senderId !== req.senderId) return;
+  clearTimeout(req.timer);
+  pending.delete(req.requestId);
+  const shop = resolve(req.shopUuid);
+  const itemName = shop?.items.get(req.itemId)?.name ?? "?";
+  if (msg.cancelled || !msg.recipientUuid) return cancelPurchase(req, t("Notify.PurchaseCancelled", { item: itemName }));
+  req.recipientUuid = msg.recipientUuid;
+  req.containerId = msg.containerId || null;
+  return gmExecuteBuy(req);
+}
+
+async function gmExecuteBuy(req) {
+  let v;
+  try { v = validatePurchase(req); if (!v.recipient) throw new Error(t("Error.BadRecipient")); }
+  catch (err) { return cancelPurchase(req, err.message); }
 
   // Take the money
   for (const p of v.payers) {

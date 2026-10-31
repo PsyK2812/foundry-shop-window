@@ -35,7 +35,7 @@ When players haggle, change the shop discount or the item discount. Players see 
 
 Click **Buy** next to an item to open the buy dialog:
 - **Quantity**
-- **Deliver to**: any character you own, and optionally a container (backpack and so on) on that character
+- After the purchase is approved, a **Where should it go?** popup lets you pick the character (yours, the party, or another player's) and the container. Nothing is charged until you choose; cancelling it cancels the purchase.
 - **Payment**: split the price across all your characters, e.g. 200 gp from A and 200 gp from B. The arrow button puts the rest on one character.
 - **Ask another player to pitch in**: pick an online player and an amount. They get a popup, choose which of their characters pays, and accept or decline.
 

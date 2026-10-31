@@ -1,6 +1,6 @@
 import { cpToGp, formatCp, gpToCp } from "./currency.mjs";
 import {
-  baseUnitCp, containersOf, deliveryTargets, escape, isMerch, ownedActors, pitchInUsers, priceCp, shopConfig, stockOf, t, walletCp
+  baseUnitCp, escape, isMerch, ownedActors, pitchInUsers, priceCp, shopConfig, stockOf, t, walletCp
 } from "./shop.mjs";
 import { requestPurchase, requestSale } from "./transactions.mjs";
 
@@ -11,11 +11,6 @@ function rootOf(arg) {
   if (arg instanceof HTMLElement) return arg;
   if (arg?.element instanceof HTMLElement) return arg.element;
   return arg?.[0] ?? null;
-}
-
-function containerOptions(actor) {
-  return `<option value="">${t("Buy.MainInventory")}</option>` +
-    containersOf(actor).map(c => `<option value="${c.id}">${escape(c.name)}</option>`).join("");
 }
 
 /* -------------------------------------------- */
@@ -32,11 +27,6 @@ export async function buyDialog(shop, item) {
   const unit = priceCp(shop, item, 1);
   const others = pitchInUsers();
 
-  const targets = deliveryTargets(game.user, shop);
-  const optList = list => list.map(a => `<option value="${a.uuid}">${escape(a.name)}</option>`).join("");
-  const actorOptions = `<option value="" selected disabled>${t("Buy.ChooseRecipient")}</option>`
-    + (targets.own.length ? `<optgroup label="${t("Buy.YourCharacters")}">${optList(targets.own)}</optgroup>` : "")
-    + (targets.others.length ? `<optgroup label="${t("Buy.OtherCharacters")}">${optList(targets.others)}</optgroup>` : "");
   const payRows = actors.map(a => `
     <div class="sw-pay-row" data-uuid="${a.uuid}" data-wallet="${walletCp(a)}">
       <img src="${a.img}" alt="">
@@ -55,8 +45,6 @@ export async function buyDialog(shop, item) {
 
       <div class="form-group"><label>${t("Buy.Quantity")}</label>
         <input type="number" name="qty" value="1" min="1" max="${maxQty}" step="1"></div>
-      <div class="form-group"><label>${t("Buy.DeliverTo")}</label><select name="recipient">${actorOptions}</select></div>
-      <div class="form-group sw-container-group" hidden><label>${t("Buy.Container")}</label><select name="container"></select></div>
 
       <div class="sw-total">${t("Buy.Total")}: <strong data-total>${formatCp(unit)}</strong></div>
 
@@ -69,6 +57,7 @@ export async function buyDialog(shop, item) {
         <div class="sw-remaining" data-remaining></div>
       </fieldset>` : `<p class="hint">${t("Buy.ManualGold")}</p>`}
       ${cfg.requireApproval && !game.user.isGM ? `<p class="hint"><i class="fa-solid fa-scale-balanced"></i> ${t("Buy.NeedsApproval")}</p>` : ""}
+      <p class="hint"><i class="fa-solid fa-box-open"></i> ${t("Buy.DestinationLater")}</p>
     </div>`;
 
   let readState = () => null;
@@ -78,8 +67,6 @@ export async function buyDialog(shop, item) {
     if (!root) return;
     const form = root.querySelector("form") ?? root;
     const qtyInput = form.querySelector("[name=qty]");
-    const recipient = form.querySelector("[name=recipient]");
-    const container = form.querySelector("[name=container]");
     const confirm = root.querySelector('button[data-action="buy"]');
     const totalEl = form.querySelector("[data-total]");
     const remainingEl = form.querySelector("[data-remaining]");
@@ -92,7 +79,7 @@ export async function buyDialog(shop, item) {
 
     const update = () => {
       totalEl.textContent = formatCp(total());
-      if (!cfg.autoGold) { if (confirm) confirm.disabled = !recipient.value; return; }
+      if (!cfg.autoGold) { if (confirm) confirm.disabled = false; return; }
       let ok = true;
       let paid = 0;
       for (const r of rows()) {
@@ -109,7 +96,6 @@ export async function buyDialog(shop, item) {
       }
       const remaining = total() - paid;
       if (remaining !== 0) ok = false;
-      if (!recipient.value) ok = false;
       remainingEl.className = `sw-remaining ${remaining === 0 ? "ok" : "bad"}`;
       remainingEl.textContent = remaining === 0 ? t("Buy.Covered")
         : remaining > 0 ? t("Buy.Remaining", { amount: formatCp(remaining) })
@@ -118,13 +104,6 @@ export async function buyDialog(shop, item) {
     };
 
     qtyInput.addEventListener("input", update);
-    const containerGroup = form.querySelector(".sw-container-group");
-    recipient.addEventListener("change", () => {
-      const actor = fromUuidSync(recipient.value);
-      container.innerHTML = containerOptions(actor);
-      containerGroup.hidden = !actor;
-      update();
-    });
     form.addEventListener("input", ev => { if (ev.target.matches(".sw-pay, .sw-pitch-amt")) update(); });
     form.querySelectorAll("[data-fill]").forEach(btn => btn.addEventListener("click", () => {
       let left = total() - pitchRows().reduce((s, r) => s + gpToCp(r.querySelector("input").value), 0);
@@ -147,8 +126,6 @@ export async function buyDialog(shop, item) {
 
     readState = () => ({
       qty: qty(),
-      recipientUuid: recipient.value,
-      containerId: container.value || null,
       payments: rows().map(r => ({ actorUuid: r.dataset.uuid, cp: gpToCp(r.querySelector("input").value) })).filter(p => p.cp > 0),
       pitchIns: pitchRows().map(r => ({ userId: r.querySelector("select").value, cp: gpToCp(r.querySelector("input").value) })).filter(p => p.cp > 0)
     });
