@@ -12,7 +12,9 @@
       "Seller": "Seller",
       "TitleBuy": "Purchase request: {shop}",
       "TitleSell": "Sale offer: {shop}",
-      "Total": "Total"
+      "Total": "Total",
+      "Offers": "Offers",
+      "TitleTrade": "Trade offer: {shop}"
     },
     "Button": {
       "Approve": "Approve",
@@ -33,7 +35,10 @@
       "Sell": "Sell an item",
       "Sheet": "Open merchant sheet",
       "Deliver": "Put it here",
-      "CancelPurchase": "Cancel purchase"
+      "CancelPurchase": "Cancel purchase",
+      "Trade": "Trade",
+      "OfferTrade": "Offer trade",
+      "Accept": "Accept trade"
     },
     "Buy": {
       "AskPitchIn": "Ask another player to pitch in",
@@ -61,7 +66,8 @@
     },
     "Chat": {
       "Bought": "{actor} bought {item} for {price}.",
-      "Sold": "{actor} sold {item} for {price}."
+      "Sold": "{actor} sold {item} for {price}.",
+      "Traded": "{actor} traded {offer} for {item}."
     },
     "Error": {
       "BadPayer": "You can only pay with characters you own.",
@@ -71,7 +77,10 @@
       "NoSelling": "This merchant isn't buying anything right now.",
       "NotEnoughOwned": "You don't have that many {item}.",
       "NotEnoughStock": "Not enough {item} in stock.",
-      "WrongAmount": "The payments don't add up to {total}."
+      "WrongAmount": "The payments don't add up to {total}.",
+      "NoGold": "This merchant doesn't take coins.",
+      "NoTrades": "This merchant doesn't trade items.",
+      "OfferGone": "An item you offered is no longer available."
     },
     "Label": {
       "AllowSelling": "Players can sell",
@@ -92,7 +101,11 @@
       "ShopDiscountHint": "Discount on everything in %. A negative value is a markup.",
       "SoldOut": "Sold out",
       "Stock": "Stock",
-      "Unlimited": "Unlimited stock"
+      "Unlimited": "Unlimited stock",
+      "Accepts": "Accepts:",
+      "AcceptGold": "Gold",
+      "AcceptTrades": "Items (trades)",
+      "TradeOnly": "Trades only"
     },
     "Notify": {
       "Bought": "{item} added to {actor}.",
@@ -112,7 +125,11 @@
       "Sold": "Sold {item} for {price}.",
       "WaitingPitchIn": "Waiting for the other players to pitch in…",
       "PurchaseCancelled": "The purchase of {item} was cancelled. Nothing was paid.",
-      "DestinationTimeout": "No inventory was chosen for {item} in time. The purchase was cancelled and nothing was paid."
+      "DestinationTimeout": "No inventory was chosen for {item} in time. The purchase was cancelled and nothing was paid.",
+      "TradeSent": "Trade offer sent to the merchant.",
+      "TradeDeclined": "The merchant turned down your trade for {item}.",
+      "TradeCancelled": "The trade for {item} was cancelled. Nothing changed hands.",
+      "Traded": "Trade done! {item} added to {actor}."
     },
     "PitchIn": {
       "Ask": "{user} asks you to pitch in {amount} for {item} at {shop}.",
@@ -151,6 +168,17 @@
     "Destination": {
       "Title": "Where should it go?",
       "Intro": "Your purchase was approved. Choose which inventory it goes into."
+    },
+    "Trade": {
+      "Title": "Trade for {item}",
+      "Worth": "Listed value: {price} each",
+      "Offer": "Your offer",
+      "DropHere": "Drag items from your character sheets here",
+      "Values": "Your offer is listed at {offer} · they want {wanted}",
+      "Note": "Message to the merchant (optional)",
+      "NoteHint": "e.g. \"It's still sharp, I promise!\"",
+      "NeedsApproval": "The GM decides whether the merchant accepts your trade.",
+      "OwnItemsOnly": "You can only offer items from characters you own."
     }
   }
 }

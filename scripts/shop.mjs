@@ -17,6 +17,8 @@ export function shopConfig(actor) {
     autoGold: f.autoGold ?? game.settings.get(MODULE_ID, "defaultAutoGold"),
     requireApproval: f.requireApproval ?? game.settings.get(MODULE_ID, "defaultRequireApproval"),
     allowSelling: f.allowSelling ?? true,
+    acceptGold: f.acceptGold ?? true,
+    acceptTrades: f.acceptTrades ?? false,
     open: !!f.open
   };
 }

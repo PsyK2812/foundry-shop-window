@@ -5,6 +5,7 @@
     <div class="sw-portrait"><img src="{{shop.img}}" alt="{{shop.name}}"></div>
     <div class="sw-sign">
       <h1>{{shop.name}}</h1>
+      {{#unless cfg.acceptGold}}{{#if cfg.acceptTrades}}<div class="sw-badge trade-only"><i class="fa-solid fa-right-left"></i> {{localize "SHOPWINDOW.Label.TradeOnly"}}</div>{{/if}}{{/unless}}
       {{#if discountText}}<div class="sw-badge {{discountClass}}">{{discountText}}</div>{{/if}}
       {{#unless cfg.open}}{{#if isGM}}<div class="sw-closed">{{localize "SHOPWINDOW.Label.ClosedForPlayers"}}</div>{{/if}}{{/unless}}
     </div>
@@ -28,6 +29,11 @@
       <label><input type="checkbox" name="autoGold" {{checked cfg.autoGold}}> {{localize "SHOPWINDOW.Label.AutoGold"}}</label>
       <label><input type="checkbox" name="requireApproval" {{checked cfg.requireApproval}}> {{localize "SHOPWINDOW.Label.RequireApproval"}}</label>
       <label><input type="checkbox" name="allowSelling" {{checked cfg.allowSelling}}> {{localize "SHOPWINDOW.Label.AllowSelling"}}</label>
+    </div>
+    <div class="sw-gm-row sw-settings">
+      <span class="sw-accepts">{{localize "SHOPWINDOW.Label.Accepts"}}</span>
+      <label><input type="checkbox" name="acceptGold" {{checked cfg.acceptGold}}> <i class="fa-solid fa-coins"></i> {{localize "SHOPWINDOW.Label.AcceptGold"}}</label>
+      <label><input type="checkbox" name="acceptTrades" {{checked cfg.acceptTrades}}> <i class="fa-solid fa-right-left"></i> {{localize "SHOPWINDOW.Label.AcceptTrades"}}</label>
     </div>
     <div class="sw-gm-row">
       <button type="button" data-action="revealAll"><i class="fa-solid fa-eye"></i> {{localize "SHOPWINDOW.Button.RevealAll"}}</button>
@@ -71,7 +77,8 @@
         </div>
 
         {{#unless ../gmView}}
-        <button type="button" class="sw-buy" data-action="buy" {{#if soldOut}}disabled{{/if}}><i class="fa-solid fa-cart-shopping"></i> {{localize "SHOPWINDOW.Button.Buy"}}</button>
+        {{#if ../cfg.acceptGold}}<button type="button" class="sw-buy" data-action="buy" {{#if soldOut}}disabled{{/if}}><i class="fa-solid fa-cart-shopping"></i> {{localize "SHOPWINDOW.Button.Buy"}}</button>{{/if}}
+        {{#if ../cfg.acceptTrades}}<button type="button" class="sw-buy sw-trade" data-action="trade" {{#if soldOut}}disabled{{/if}}><i class="fa-solid fa-right-left"></i> {{localize "SHOPWINDOW.Button.Trade"}}</button>{{/if}}
         {{/unless}}
       </div>
       <div class="sw-desc">{{{description}}}</div>

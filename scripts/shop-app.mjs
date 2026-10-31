@@ -1,5 +1,5 @@
 import { formatCp } from "./currency.mjs";
-import { buyDialog, sellDialog } from "./dialogs.mjs";
+import { buyDialog, sellDialog, tradeDialog } from "./dialogs.mjs";
 import {
   MODULE_ID, baseUnitCp, isMerch, itemConfig, priceCp, shopConfig, stockOf, t
 } from "./shop.mjs";
@@ -26,6 +26,7 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
     position: { width: 640, height: 760 },
     actions: {
       buy: ShopWindow.#onBuy,
+      trade: ShopWindow.#onTrade,
       sell: ShopWindow.#onSell,
       toggleExpand: ShopWindow.#onToggleExpand,
       toggleHidden: ShopWindow.#onToggleHidden,
@@ -137,6 +138,8 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
       case "autoGold": return this.shop.setFlag(MODULE_ID, "autoGold", input.checked);
       case "requireApproval": return this.shop.setFlag(MODULE_ID, "requireApproval", input.checked);
       case "allowSelling": return this.shop.setFlag(MODULE_ID, "allowSelling", input.checked);
+      case "acceptGold": return this.shop.setFlag(MODULE_ID, "acceptGold", input.checked);
+      case "acceptTrades": return this.shop.setFlag(MODULE_ID, "acceptTrades", input.checked);
       case "stock": return item?.update({ "system.quantity": Math.max(0, Math.floor(num(input.value))) });
       case "itemDiscount": return item?.setFlag(MODULE_ID, "discount", Math.min(100, num(input.value)));
     }
@@ -173,6 +176,11 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
   static async #onBuy(event, target) {
     const item = ShopWindow.#item.call(this, target);
     if (item) buyDialog(this.shop, item);
+  }
+
+  static async #onTrade(event, target) {
+    const item = ShopWindow.#item.call(this, target);
+    if (item) tradeDialog(this.shop, item);
   }
 
   static async #onSell() {

@@ -101,6 +101,10 @@
 }
 .sw-badge.sale { background: var(--sw-green); }
 .sw-badge.markup { background: var(--sw-red); }
+.sw-badge.trade-only { background: #5a4a8a; margin-right: .3rem; }
+.sw-accepts { font-weight: bold; margin-right: .2rem; }
+.sw-buy.sw-trade { background: #5a4a8a; border-color: #3b2f5e; }
+.sw-buy.sw-trade:hover:not(:disabled) { background: #6d5ca3; }
 .sw-closed { margin-top: .35rem; font-size: .8rem; font-style: italic; opacity: .7; }
 
 /* ---------- GM bar ---------- */
@@ -258,3 +262,20 @@
 .sw-chat img { width: 36px; height: 36px; border: none; flex: 0 0 36px; }
 .sw-chat p { margin: 0; }
 .shop-window-dialog .sw-container-group[hidden] { display: none; }
+
+/* Trade dialog */
+.shop-window-dialog .sw-dropzone {
+  border: 2px dashed #8a6a3a; border-radius: 6px; padding: .8rem; text-align: center;
+  opacity: .85; margin: .4rem 0; transition: background .15s;
+}
+.shop-window-dialog .sw-dropzone.over { background: rgba(201, 162, 39, .25); opacity: 1; }
+.shop-window-dialog .sw-offer-list { display: flex; flex-direction: column; gap: .3rem; }
+.shop-window-dialog .sw-offer-row { display: flex; align-items: center; gap: .4rem; }
+.shop-window-dialog .sw-offer-row img { width: 32px; height: 32px; border-radius: 3px; border: none; }
+.shop-window-dialog .sw-offer-row .sw-pay-name { flex: 1; }
+.shop-window-dialog .sw-offer-row input { width: 4rem; flex: 0 0 4rem; }
+.shop-window-dialog .sw-values { font-size: .9rem; opacity: .85; }
+.shop-window-dialog textarea { width: 100%; min-height: 3rem; }
+.shop-window-dialog .sw-offer-ul { list-style: none; padding: 0; margin: .2rem 0; }
+.shop-window-dialog .sw-offer-ul li { display: flex; align-items: center; gap: .4rem; margin: .15rem 0; }
+.shop-window-dialog .sw-li-img { width: 24px; height: 24px; border: none; }

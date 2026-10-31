@@ -2,7 +2,7 @@ import { cpToGp, formatCp, gpToCp } from "./currency.mjs";
 import {
   baseUnitCp, escape, isMerch, ownedActors, pitchInUsers, priceCp, shopConfig, stockOf, t, walletCp
 } from "./shop.mjs";
-import { requestPurchase, requestSale } from "./transactions.mjs";
+import { requestPurchase, requestSale, requestTrade } from "./transactions.mjs";
 
 const { DialogV2 } = foundry.applications.api;
 
@@ -227,4 +227,118 @@ export async function sellDialog(shop, actor = null, item = null) {
   });
   if (!result?.itemId) return;
   requestSale({ shopUuid: shop.uuid, ...result });
+}
+
+/* -------------------------------------------- */
+/*  Trade                                        */
+/* -------------------------------------------- */
+
+export async function tradeDialog(shop, item) {
+  const stock = stockOf(item);
+  if (stock <= 0) return ui.notifications.warn(t("Error.NotEnoughStock", { item: item.name }));
+  const maxQty = Number.isFinite(stock) ? stock : 999;
+  const wantedUnit = baseUnitCp(item);
+
+  /** @type {{item: Item, qty: number}[]} */
+  const offered = [];
+
+  const content = `
+    <div class="sw-dialog">
+      <div class="sw-approval-item"><img src="${item.img}"><div>
+        <strong>${escape(item.name)}</strong><br>
+        <span>${t("Trade.Worth", { price: formatCp(wantedUnit) })}</span>
+      </div></div>
+      <div class="form-group"><label>${t("Buy.Quantity")}</label>
+        <input type="number" name="qty" value="1" min="1" max="${maxQty}" step="1"></div>
+      <fieldset><legend>${t("Trade.Offer")}</legend>
+        <div class="sw-offer-list"></div>
+        <div class="sw-dropzone"><i class="fa-solid fa-hand-holding-hand"></i> ${t("Trade.DropHere")}</div>
+        <div class="sw-values"></div>
+      </fieldset>
+      <div class="form-group stacked"><label>${t("Trade.Note")}</label>
+        <textarea name="note" placeholder="${t("Trade.NoteHint")}"></textarea></div>
+      <p class="hint"><i class="fa-solid fa-scale-balanced"></i> ${t("Trade.NeedsApproval")}</p>
+    </div>`;
+
+  let readState = () => null;
+  const render = (event, dialogOrEl) => {
+    const root = rootOf(dialogOrEl) ?? rootOf(event?.target);
+    if (!root) return;
+    const qtyInput = root.querySelector("[name=qty]");
+    const list = root.querySelector(".sw-offer-list");
+    const zone = root.querySelector(".sw-dropzone");
+    const values = root.querySelector(".sw-values");
+    const confirm = root.querySelector('button[data-action="trade"]');
+
+    const qty = () => Math.min(maxQty, Math.max(1, Math.floor(Number(qtyInput.value) || 1)));
+    const update = () => {
+      const offerCp = offered.reduce((s, o) => s + baseUnitCp(o.item) * o.qty, 0);
+      values.textContent = t("Trade.Values", { offer: formatCp(offerCp), wanted: formatCp(wantedUnit * qty()) });
+      if (confirm) confirm.disabled = !offered.length;
+    };
+    const draw = () => {
+      list.innerHTML = "";
+      for (const o of offered) {
+        const max = Number(o.item.system.quantity) || 1;
+        const row = document.createElement("div");
+        row.className = "sw-offer-row";
+        row.innerHTML = `<img src="${o.item.img}" alt="">
+          <span class="sw-pay-name">${escape(o.item.name)}<small>${escape(o.item.parent.name)} · ${formatCp(baseUnitCp(o.item))}</small></span>
+          <input type="number" min="1" max="${max}" step="1" value="${o.qty}" ${max <= 1 ? "disabled" : ""}>
+          <button type="button" class="sw-mini" data-tooltip="${t("Buy.Remove")}"><i class="fa-solid fa-trash"></i></button>`;
+        row.querySelector("input").addEventListener("input", ev => {
+          o.qty = Math.min(max, Math.max(1, Math.floor(Number(ev.target.value) || 1)));
+          update();
+        });
+        row.querySelector("button").addEventListener("click", () => {
+          offered.splice(offered.indexOf(o), 1);
+          draw();
+        });
+        list.append(row);
+      }
+      update();
+    };
+
+    const onDrop = async ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      zone.classList.remove("over");
+      const TE = foundry.applications.ux?.TextEditor?.implementation ?? globalThis.TextEditor;
+      let data;
+      try { data = TE.getDragEventData(ev); } catch { return; }
+      if (data?.type !== "Item") return;
+      const dropped = await Item.implementation.fromDropData(data);
+      if (!dropped || !(dropped.parent instanceof Actor) || dropped.parent === shop || !dropped.parent.isOwner) {
+        return ui.notifications.warn(t("Trade.OwnItemsOnly"));
+      }
+      if (!isMerch(dropped) || (Number(dropped.system.quantity) || 0) < 1) return ui.notifications.warn(t("Notify.NotMerch"));
+      if (offered.some(o => o.item === dropped)) return;
+      offered.push({ item: dropped, qty: 1 });
+      draw();
+    };
+    root.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("over"); });
+    root.addEventListener("dragleave", ev => { if (!root.contains(ev.relatedTarget)) zone.classList.remove("over"); });
+    root.addEventListener("drop", onDrop);
+    qtyInput.addEventListener("input", update);
+
+    readState = () => offered.length ? {
+      qty: qty(),
+      offered: offered.map(o => ({ actorUuid: o.item.parent.uuid, itemId: o.item.id, qty: o.qty })),
+      note: root.querySelector("[name=note]").value.trim()
+    } : null;
+    update();
+  };
+
+  const result = await DialogV2.wait({
+    window: { title: t("Trade.Title", { item: item.name }), icon: "fa-solid fa-right-left" },
+    classes: ["shop-window-dialog"],
+    position: { width: 460 },
+    content, render, rejectClose: false,
+    buttons: [
+      { action: "trade", label: t("Button.OfferTrade"), icon: "fa-solid fa-right-left", default: true, callback: () => readState() },
+      { action: "cancel", label: t("Button.Cancel"), icon: "fa-solid fa-xmark", callback: () => null }
+    ]
+  });
+  if (!result) return;
+  requestTrade({ shopUuid: shop.uuid, itemId: item.id, ...result });
 }

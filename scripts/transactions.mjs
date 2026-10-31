@@ -45,6 +45,7 @@ async function receive(msg) {
       case "notify": return ui.notifications[msg.level ?? "info"](msg.message, { permanent: !!msg.permanent });
       case "buy": return gmHandleBuy(msg);
       case "sell": return gmHandleSell(msg);
+      case "trade": return gmHandleTrade(msg);
       case "pitchInAsk": return playerAnswerPitchIn(msg);
       case "pitchInReply": return gmHandlePitchInReply(msg);
       case "chooseDestination": return playerChooseDestination(msg);
@@ -86,6 +87,15 @@ export function requestSale(req) {
   if (!gmAvailable()) return;
   send("gm", { action: "sell", requestId: foundry.utils.randomID(), ...req });
   if (!isActiveGM()) ui.notifications.info(t("Notify.SaleSent"));
+}
+
+/**
+ * @param {object} req  {shopUuid, itemId, qty, offered:[{actorUuid, itemId, qty}], note}
+ */
+export function requestTrade(req) {
+  if (!gmAvailable()) return;
+  send("gm", { action: "trade", requestId: foundry.utils.randomID(), ...req });
+  if (!isActiveGM()) ui.notifications.info(t("Notify.TradeSent"));
 }
 
 /** Another player asked this user to pitch in. */
@@ -185,6 +195,7 @@ function validatePurchase(req) {
   const qty = Math.max(1, Math.floor(Number(req.qty) || 1));
   if (!buyer.isGM && itemConfig(item).hidden) throw new Error(t("Error.ItemGone"));
   if (stockOf(item) < qty) throw new Error(t("Error.NotEnoughStock", { item: item.name }));
+  if (req.kind !== "trade" && !cfg.acceptGold && !buyer.isGM) throw new Error(t("Error.NoGold"));
 
   let recipient = null;
   if (req.recipientUuid) {
@@ -195,7 +206,7 @@ function validatePurchase(req) {
 
   const total = priceCp(shop, item, qty);
   const payers = [];
-  if (cfg.autoGold) {
+  if (cfg.autoGold && req.kind !== "trade") {
     const byActor = new Map();
     for (const p of req.payments ?? []) {
       const actor = resolve(p.actorUuid);
@@ -307,7 +318,11 @@ async function gmFinalizeBuy(req) {
     catch (err) { return notify(req.senderId, err.message, "warn"); }
   }
 
-  // Ask the buyer where the item should go. Nothing is charged until they answer.
+  askDestination(req, v);
+}
+
+/** Ask the buyer where the item should go. Nothing changes hands until they answer. */
+function askDestination(req, v) {
   req.stage = "destination";
   pending.set(req.requestId, req);
   req.timer = setTimeout(() => {
@@ -332,10 +347,12 @@ async function gmHandleDestination(msg) {
   pending.delete(req.requestId);
   const shop = resolve(req.shopUuid);
   const itemName = shop?.items.get(req.itemId)?.name ?? "?";
-  if (msg.cancelled || !msg.recipientUuid) return cancelPurchase(req, t("Notify.PurchaseCancelled", { item: itemName }));
+  if (msg.cancelled || !msg.recipientUuid) {
+    return cancelPurchase(req, t(req.kind === "trade" ? "Notify.TradeCancelled" : "Notify.PurchaseCancelled", { item: itemName }));
+  }
   req.recipientUuid = msg.recipientUuid;
   req.containerId = msg.containerId || null;
-  return gmExecuteBuy(req);
+  return req.kind === "trade" ? gmExecuteTrade(req) : gmExecuteBuy(req);
 }
 
 async function gmExecuteBuy(req) {
@@ -364,6 +381,95 @@ async function gmExecuteBuy(req) {
       content: `<div class="sw-chat"><img src="${v.item.img}"><p>${t("Chat.Bought", {
         actor: `<strong>${escape(v.recipient.name)}</strong>`, item: `<strong>${v.qty}× ${escape(v.item.name)}</strong>`,
         price: `<strong>${formatCp(v.total)}</strong>` })}</p></div>${paid}`
+    });
+  }
+}
+
+/* -------------------------------------------- */
+/*  GM side: trades                              */
+/* -------------------------------------------- */
+
+function validateTrade(req) {
+  req.kind = "trade";
+  const copy = { ...req, payments: [], pitchIns: [] };
+  const v = validatePurchase(copy);
+  req.containerId = copy.containerId;
+  if (!v.cfg.acceptTrades) throw new Error(t("Error.NoTrades"));
+  const offered = [];
+  for (const o of req.offered ?? []) {
+    const actor = resolve(o.actorUuid);
+    const item = actor?.items.get(o.itemId);
+    if (!actor || !item || actor === v.shop) throw new Error(t("Error.OfferGone"));
+    if (!actor.testUserPermission(v.buyer, "OWNER")) throw new Error(t("Error.BadPayer"));
+    const qty = Math.max(1, Math.floor(Number(o.qty) || 1));
+    if ((Number(item.system.quantity) || 0) < qty) throw new Error(t("Error.NotEnoughOwned", { item: item.name }));
+    offered.push({ actor, item, qty });
+  }
+  if (!offered.length) throw new Error(t("Error.OfferGone"));
+  return { ...v, offered };
+}
+
+function offerList(offered) {
+  return offered.map(o => `<li><img src="${o.item.img}" class="sw-li-img"> ${o.qty}× ${escape(o.item.name)}
+    <small>(${escape(o.actor.name)}, ${formatCp(baseUnitCp(o.item) * o.qty)})</small></li>`).join("");
+}
+
+async function gmHandleTrade(req) {
+  let v;
+  try { v = validateTrade(req); }
+  catch (err) { return notify(req.senderId, err.message, "warn"); }
+
+  // Trades always need the GM's okay
+  if (!v.buyer.isGM) {
+    const offerCp = v.offered.reduce((s, o) => s + baseUnitCp(o.item) * o.qty, 0);
+    const content = `
+      <div class="sw-approval">
+        <div class="sw-approval-item"><img src="${v.item.img}"><div>
+          <strong>${v.qty}× ${escape(v.item.name)}</strong> (${formatCp(baseUnitCp(v.item) * v.qty)})<br>
+          ${t("Approval.Buyer")}: ${escape(v.buyer.name)}
+        </div></div>
+        <p>${t("Approval.Offers")}:</p>
+        <ul class="sw-offer-ul">${offerList(v.offered)}</ul>
+        <p>${t("Trade.Values", { offer: formatCp(offerCp), wanted: formatCp(baseUnitCp(v.item) * v.qty) })}</p>
+        ${req.note ? `<blockquote>${escape(req.note)}</blockquote>` : ""}
+      </div>`;
+    const ok = await foundry.applications.api.DialogV2.confirm({
+      window: { title: t("Approval.TitleTrade", { shop: v.shop.name }), icon: "fa-solid fa-right-left" },
+      classes: ["shop-window-dialog"],
+      content, rejectClose: false,
+      yes: { label: t("Button.Accept"), icon: "fa-solid fa-check" },
+      no: { label: t("Button.Decline"), icon: "fa-solid fa-xmark" }
+    });
+    if (!ok) return notify(req.senderId, t("Notify.TradeDeclined", { item: v.item.name }), "warn");
+    try { v = validateTrade(req); }
+    catch (err) { return notify(req.senderId, err.message, "warn"); }
+  }
+  askDestination(req, v);
+}
+
+async function gmExecuteTrade(req) {
+  let v;
+  try { v = validateTrade(req); if (!v.recipient) throw new Error(t("Error.BadRecipient")); }
+  catch (err) { return cancelPurchase(req, err.message); }
+
+  // Offered items go to the merchant (hidden until revealed)
+  for (const o of v.offered) {
+    const stocked = await giveItem(v.shop, o.item, o.qty, null);
+    if (stocked && stocked.flags?.[MODULE_ID]?.hidden === undefined) await stocked.setFlag(MODULE_ID, "hidden", true);
+    await takeItem(o.item, o.qty, false);
+  }
+  // Wanted item goes to the chosen inventory
+  await giveItem(v.recipient, v.item, v.qty, req.containerId);
+  if (!itemConfig(v.item).unlimited) await takeItem(v.item, v.qty, true);
+
+  notify(req.senderId, t("Notify.Traded", { item: `${v.qty}× ${v.item.name}`, actor: v.recipient.name }));
+  if (game.settings.get(MODULE_ID, "chatMessages")) {
+    const gave = v.offered.map(o => `${o.qty}× ${escape(o.item.name)}`).join(", ");
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor: v.shop }),
+      content: `<div class="sw-chat"><img src="${v.item.img}"><p>${t("Chat.Traded", {
+        actor: `<strong>${escape(v.recipient.name)}</strong>`, item: `<strong>${v.qty}× ${escape(v.item.name)}</strong>`,
+        offer: `<strong>${gave}</strong>` })}</p></div>`
     });
   }
 }

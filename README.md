@@ -27,6 +27,7 @@ You can drag items from the sidebar, a compendium or another sheet onto the wind
 | Automatic gold | Turn coin handling on or off for this shop |
 | GM approves purchases | Each purchase waits for your Approve / Decline |
 | Players can sell | Show or hide the sell button |
+| Accepts: Gold / Items | What the merchant takes as payment. Gold shows the Buy button, Items shows the Trade button. Tick both for both |
 | Player view | See the shop exactly as the players do |
 
 When players haggle, change the shop discount or the item discount. Players see the old price struck through next to the new price.
@@ -40,6 +41,10 @@ Click **Buy** next to an item to open the buy dialog:
 - **Ask another player to pitch in**: pick an online player and an amount. They get a popup, choose which of their characters pays, and accept or decline.
 
 The GM gets an approval window that shows the full breakdown. When the GM approves, the coins are taken (with change made automatically), the item goes into the chosen inventory, the stock drops by the amount bought and a chat message is posted.
+
+## Trading (players)
+
+If the merchant accepts items, a **Trade** button sits next to Buy. Click it, drag items from your character sheets into the window, set quantities and optionally add a message. The GM sees the offer with the listed values of both sides and accepts or declines. After that you choose the inventory the item goes into. The offered items move into the merchant's stock as hidden items.
 
 ## Selling (players)
 
