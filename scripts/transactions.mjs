@@ -1,6 +1,6 @@
 import { add, cpToGp, deduct, formatCp, gpToCp } from "./currency.mjs";
 import {
-  MODULE_ID, baseUnitCp, escape, giveItem, isMerch, itemConfig, priceCp, resolve, shopConfig,
+  MODULE_ID, baseUnitCp, canDeliverTo, escape, giveItem, isMerch, itemConfig, priceCp, resolve, shopConfig,
   stockOf, t, takeItem, walletCp
 } from "./shop.mjs";
 
@@ -131,7 +131,7 @@ function validatePurchase(req) {
   if (stockOf(item) < qty) throw new Error(t("Error.NotEnoughStock", { item: item.name }));
 
   const recipient = resolve(req.recipientUuid);
-  if (!recipient || !recipient.testUserPermission(buyer, "OWNER")) throw new Error(t("Error.BadRecipient"));
+  if (!recipient || !canDeliverTo(recipient, buyer)) throw new Error(t("Error.BadRecipient"));
   if (req.containerId && recipient.items.get(req.containerId)?.type !== "container") req.containerId = null;
 
   const total = priceCp(shop, item, qty);

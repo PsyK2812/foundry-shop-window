@@ -2,7 +2,7 @@
   "id": "shop-window",
   "title": "Shop Window",
   "description": "Open a stall-style shop window for your players. Hide and reveal stock, haggle discounts, buy with automatic coin handling, split payments across several actors and ask other players to pitch in.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "authors": [
     {
       "name": "PsyK2812",
@@ -41,7 +41,7 @@
   "socket": true,
   "url": "https://github.com/PsyK2812/foundry-shop-window",
   "manifest": "https://github.com/PsyK2812/foundry-shop-window/releases/latest/download/module.json",
-  "download": "https://github.com/PsyK2812/foundry-shop-window/releases/download/v1.0.0/shop-window.zip",
+  "download": "https://github.com/PsyK2812/foundry-shop-window/releases/download/v1.0.1/shop-window.zip",
   "bugs": "https://github.com/PsyK2812/foundry-shop-window/issues",
   "license": "MIT"
 }

@@ -1,6 +1,6 @@
 import { cpToGp, formatCp, gpToCp } from "./currency.mjs";
 import {
-  baseUnitCp, containersOf, escape, isMerch, ownedActors, pitchInUsers, priceCp, shopConfig, stockOf, t, walletCp
+  baseUnitCp, containersOf, deliveryTargets, escape, isMerch, ownedActors, pitchInUsers, priceCp, shopConfig, stockOf, t, walletCp
 } from "./shop.mjs";
 import { requestPurchase, requestSale } from "./transactions.mjs";
 
@@ -32,7 +32,11 @@ export async function buyDialog(shop, item) {
   const unit = priceCp(shop, item, 1);
   const others = pitchInUsers();
 
-  const actorOptions = actors.map(a => `<option value="${a.uuid}">${escape(a.name)}</option>`).join("");
+  const targets = deliveryTargets(game.user, shop);
+  const optList = list => list.map(a => `<option value="${a.uuid}">${escape(a.name)}</option>`).join("");
+  const actorOptions = `<option value="" selected disabled>${t("Buy.ChooseRecipient")}</option>`
+    + (targets.own.length ? `<optgroup label="${t("Buy.YourCharacters")}">${optList(targets.own)}</optgroup>` : "")
+    + (targets.others.length ? `<optgroup label="${t("Buy.OtherCharacters")}">${optList(targets.others)}</optgroup>` : "");
   const payRows = actors.map(a => `
     <div class="sw-pay-row" data-uuid="${a.uuid}" data-wallet="${walletCp(a)}">
       <img src="${a.img}" alt="">
@@ -52,7 +56,7 @@ export async function buyDialog(shop, item) {
       <div class="form-group"><label>${t("Buy.Quantity")}</label>
         <input type="number" name="qty" value="1" min="1" max="${maxQty}" step="1"></div>
       <div class="form-group"><label>${t("Buy.DeliverTo")}</label><select name="recipient">${actorOptions}</select></div>
-      <div class="form-group"><label>${t("Buy.Container")}</label><select name="container">${containerOptions(actors[0])}</select></div>
+      <div class="form-group sw-container-group" hidden><label>${t("Buy.Container")}</label><select name="container"></select></div>
 
       <div class="sw-total">${t("Buy.Total")}: <strong data-total>${formatCp(unit)}</strong></div>
 
@@ -86,21 +90,9 @@ export async function buyDialog(shop, item) {
     const rows = () => [...form.querySelectorAll(".sw-pay-row")];
     const pitchRows = () => [...form.querySelectorAll(".sw-pitch-row")];
 
-    const autoFill = () => {
-      if (!cfg.autoGold) return;
-      let left = total() - pitchRows().reduce((s, r) => s + gpToCp(r.querySelector("input").value), 0);
-      // pay from the recipient first, then the others in order
-      const ordered = rows().sort((a, b) => (b.dataset.uuid === recipient.value) - (a.dataset.uuid === recipient.value));
-      for (const r of ordered) {
-        const take = Math.max(0, Math.min(left, Number(r.dataset.wallet)));
-        r.querySelector("input").value = cpToGp(take);
-        left -= take;
-      }
-    };
-
     const update = () => {
       totalEl.textContent = formatCp(total());
-      if (!cfg.autoGold) { if (confirm) confirm.disabled = false; return; }
+      if (!cfg.autoGold) { if (confirm) confirm.disabled = !recipient.value; return; }
       let ok = true;
       let paid = 0;
       for (const r of rows()) {
@@ -117,6 +109,7 @@ export async function buyDialog(shop, item) {
       }
       const remaining = total() - paid;
       if (remaining !== 0) ok = false;
+      if (!recipient.value) ok = false;
       remainingEl.className = `sw-remaining ${remaining === 0 ? "ok" : "bad"}`;
       remainingEl.textContent = remaining === 0 ? t("Buy.Covered")
         : remaining > 0 ? t("Buy.Remaining", { amount: formatCp(remaining) })
@@ -124,10 +117,13 @@ export async function buyDialog(shop, item) {
       if (confirm) confirm.disabled = !ok;
     };
 
-    qtyInput.addEventListener("input", () => { autoFill(); update(); });
+    qtyInput.addEventListener("input", update);
+    const containerGroup = form.querySelector(".sw-container-group");
     recipient.addEventListener("change", () => {
       const actor = fromUuidSync(recipient.value);
       container.innerHTML = containerOptions(actor);
+      containerGroup.hidden = !actor;
+      update();
     });
     form.addEventListener("input", ev => { if (ev.target.matches(".sw-pay, .sw-pitch-amt")) update(); });
     form.querySelectorAll("[data-fill]").forEach(btn => btn.addEventListener("click", () => {
@@ -157,7 +153,6 @@ export async function buyDialog(shop, item) {
       pitchIns: pitchRows().map(r => ({ userId: r.querySelector("select").value, cp: gpToCp(r.querySelector("input").value) })).filter(p => p.cp > 0)
     });
 
-    autoFill();
     update();
   };
 

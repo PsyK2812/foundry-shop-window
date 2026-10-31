@@ -51,7 +51,10 @@
       "Remove": "Remove",
       "Title": "Buy {item}",
       "TooMuch": "Overpaying by {amount}",
-      "Total": "Total"
+      "Total": "Total",
+      "ChooseRecipient": "Choose who gets it…",
+      "YourCharacters": "Your characters",
+      "OtherCharacters": "Party & other characters"
     },
     "Chat": {
       "Bought": "{actor} bought {item} for {price}.",
@@ -59,7 +62,7 @@
     },
     "Error": {
       "BadPayer": "You can only pay with characters you own.",
-      "BadRecipient": "You can only deliver items to characters you own.",
+      "BadRecipient": "You can't deliver items to that character.",
       "CantAfford": "{actor} doesn't have enough coins.",
       "ItemGone": "That item is no longer available.",
       "NoSelling": "This merchant isn't buying anything right now.",

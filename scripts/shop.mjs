@@ -73,6 +73,24 @@ export function ownedActors(user = game.user, exclude = null) {
   });
 }
 
+/**
+ * Where a user may have a bought item delivered: their own characters first,
+ * then other player characters and party (group) actors.
+ */
+export function deliveryTargets(user = game.user, exclude = null) {
+  const own = ownedActors(user, exclude);
+  const others = game.actors.filter(a => a !== exclude && !own.includes(a) && canDeliverTo(a, user))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return { own, others };
+}
+
+/** Can `user` have items delivered to `actor`? */
+export function canDeliverTo(actor, user) {
+  if (!actor?.system?.currency && actor?.type !== "group") return false;
+  if (actor.testUserPermission(user, "OWNER")) return true;
+  return actor.type === "group" || (actor.type === "character" && actor.hasPlayerOwner);
+}
+
 export function walletCp(actor) {
   return walletToCp(actor?.system?.currency ?? {});
 }

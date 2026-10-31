@@ -257,3 +257,4 @@
 .sw-chat { display: flex; align-items: center; gap: .5rem; }
 .sw-chat img { width: 36px; height: 36px; border: none; flex: 0 0 36px; }
 .sw-chat p { margin: 0; }
+.shop-window-dialog .sw-container-group[hidden] { display: none; }
