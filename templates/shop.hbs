@@ -46,14 +46,51 @@
 
   <div class="sw-counter" aria-hidden="true"></div>
 
+  <section class="sw-filters">
+    <div class="sw-search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="search" value="{{filters.search}}" placeholder="{{localize "SHOPWINDOW.Filter.Search"}}" autocomplete="off">
+    </div>
+    <select name="type" data-tooltip="{{localize "SHOPWINDOW.Filter.Type"}}">
+      <option value="">{{localize "SHOPWINDOW.Filter.AllTypes"}}</option>
+      {{#each typeOptions}}<option value="{{value}}" {{#if (eq value ../filters.type)}}selected{{/if}}>{{label}}</option>{{/each}}
+    </select>
+    {{#if rarityOptions.length}}
+    <select name="rarity" data-tooltip="{{localize "SHOPWINDOW.Filter.Rarity"}}">
+      <option value="">{{localize "SHOPWINDOW.Filter.AllRarities"}}</option>
+      {{#each rarityOptions}}<option value="{{value}}" {{#if (eq value ../filters.rarity)}}selected{{/if}}>{{label}}</option>{{/each}}
+    </select>
+    {{/if}}
+    {{#if anyAttune}}
+    <select name="attune" data-tooltip="{{localize "SHOPWINDOW.Filter.Attunement"}}">
+      <option value="">{{localize "SHOPWINDOW.Filter.AttuneAny"}}</option>
+      <option value="required" {{#if (eq filters.attune "required")}}selected{{/if}}>{{localize "SHOPWINDOW.Filter.AttuneRequired"}}</option>
+      <option value="none" {{#if (eq filters.attune "none")}}selected{{/if}}>{{localize "SHOPWINDOW.Filter.AttuneNone"}}</option>
+    </select>
+    {{/if}}
+    <select name="sort" data-tooltip="{{localize "SHOPWINDOW.Filter.Sort"}}">
+      <option value="default" {{#if (eq filters.sort "default")}}selected{{/if}}>{{localize "SHOPWINDOW.Filter.SortDefault"}}</option>
+      <option value="name" {{#if (eq filters.sort "name")}}selected{{/if}}>{{localize "SHOPWINDOW.Filter.SortName"}}</option>
+      <option value="priceAsc" {{#if (eq filters.sort "priceAsc")}}selected{{/if}}>{{localize "SHOPWINDOW.Filter.SortPriceAsc"}}</option>
+      <option value="priceDesc" {{#if (eq filters.sort "priceDesc")}}selected{{/if}}>{{localize "SHOPWINDOW.Filter.SortPriceDesc"}}</option>
+    </select>
+    <label class="sw-instock"><input type="checkbox" name="inStock" {{checked filters.inStock}}> {{localize "SHOPWINDOW.Filter.InStock"}}</label>
+    <button type="button" class="sw-clear" data-clear data-tooltip="{{localize "SHOPWINDOW.Filter.Clear"}}"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+    <span class="sw-count" data-count></span>
+  </section>
+
   <ol class="sw-items">
     {{#each items}}
-    <li class="sw-item {{#if hidden}}is-hidden{{/if}} {{#if soldOut}}sold-out{{/if}} {{#if expanded}}expanded{{/if}}" data-item-id="{{id}}">
+    <li class="sw-item {{#if hidden}}is-hidden{{/if}} {{#if soldOut}}sold-out{{/if}} {{#if expanded}}expanded{{/if}}" data-item-id="{{id}}"
+        data-index="{{@index}}" data-name="{{name}}" data-type="{{type}}" data-rarity="{{rarity}}" data-attune="{{attune}}"
+        data-price="{{priceCp}}" data-sold-out="{{#if soldOut}}true{{else}}false{{/if}}" data-search="{{searchText}}">
       <div class="sw-item-row">
         <img class="sw-item-img" src="{{img}}" alt="">
         <div class="sw-item-name" data-action="toggleExpand">
           <span class="name">{{name}}</span>
-          <span class="sub">{{typeLabel}}{{#if hidden}} · <i class="fa-solid fa-eye-slash"></i> {{localize "SHOPWINDOW.Label.Hidden"}}{{/if}}</span>
+          <span class="sub">{{typeLabel}}{{#if rarityLabel}} · <span class="sw-rarity rarity-{{rarity}}">{{rarityLabel}}</span>{{/if}}{{#if hidden}} · <i class="fa-solid fa-eye-slash"></i> {{localize "SHOPWINDOW.Label.Hidden"}}{{/if}}</span>
+          {{#if attuneRequired}}<span class="sw-attune" data-tooltip="{{localize "SHOPWINDOW.Label.AttuneRequiredHint"}}"><i class="fa-solid fa-hand-sparkles"></i> {{localize "SHOPWINDOW.Label.AttuneRequired"}}</span>{{/if}}
+          {{#if attuneOptional}}<span class="sw-attune optional"><i class="fa-solid fa-hand-sparkles"></i> {{localize "SHOPWINDOW.Label.AttuneOptional"}}</span>{{/if}}
         </div>
 
         {{#if ../gmView}}
@@ -86,6 +123,7 @@
     {{else}}
     <li class="sw-empty">{{#if ../gmView}}{{localize "SHOPWINDOW.Label.EmptyGM"}}{{else}}{{localize "SHOPWINDOW.Label.Empty"}}{{/if}}</li>
     {{/each}}
+    {{#if items.length}}<li class="sw-empty sw-no-match" hidden>{{localize "SHOPWINDOW.Filter.NoMatch"}}</li>{{/if}}
   </ol>
 
   {{#unless gmView}}{{#if cfg.allowSelling}}

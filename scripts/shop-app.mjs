@@ -1,7 +1,7 @@
 import { formatCp } from "./currency.mjs";
 import { buyDialog, sellDialog, tradeDialog } from "./dialogs.mjs";
 import {
-  MODULE_ID, baseUnitCp, isMerch, itemConfig, priceCp, shopConfig, stockOf, t
+  MODULE_ID, attunementOf, baseUnitCp, isMerch, rarityOf, itemConfig, priceCp, shopConfig, stockOf, t
 } from "./shop.mjs";
 import { broadcast } from "./transactions.mjs";
 
@@ -17,6 +17,8 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
     this.shop = shop;
     this.gmView = game.user.isGM;
     this.expanded = new Set();
+    /** Search / filter / sort state, kept across re-renders */
+    this.filters = { search: "", type: "", attune: "", rarity: "", inStock: false, sort: "default" };
   }
 
   static DEFAULT_OPTIONS = {
@@ -92,11 +94,21 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         });
         if (!description.trim()) description = `<p class="sw-muted">${t("Label.NoDescription")}</p>`;
       }
+      const attune = attunementOf(item);
+      const rarity = rarityOf(item);
       items.push({
         id: item.id,
         name: item.name,
         img: item.img,
+        type: item.type,
         typeLabel: game.i18n.localize(CONFIG.Item.typeLabels?.[item.type] ?? item.type),
+        attune,
+        attuneRequired: attune === "required",
+        attuneOptional: attune === "optional",
+        rarity: rarity.key,
+        rarityLabel: rarity.label,
+        priceCp: final,
+        searchText: `${item.name} ${(item.system.description?.value ?? "").replace(/<[^>]*>/g, " ")}`.toLowerCase(),
         quantity: item.system.quantity,
         hidden: ic.hidden,
         unlimited: ic.unlimited,
@@ -113,7 +125,16 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
     let discountClass = "";
     if (cfg.discount > 0) { discountText = t("Label.SaleBadge", { pct: cfg.discount }); discountClass = "sale"; }
     else if (cfg.discount < 0) { discountText = t("Label.MarkupBadge", { pct: -cfg.discount }); discountClass = "markup"; }
-    return { shop, cfg, items, gmView, isGM: game.user.isGM, discountText, discountClass };
+    // Filter options built from what's actually on display
+    const typeOptions = [...new Map(items.map(i => [i.type, i.typeLabel])).entries()]
+      .map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
+    const rarityOrder = Object.keys(CONFIG.DND5E?.itemRarity ?? {});
+    const rarityOptions = [...new Map(items.filter(i => i.rarity).map(i => [i.rarity, i.rarityLabel])).entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => rarityOrder.indexOf(a.value) - rarityOrder.indexOf(b.value));
+    const anyAttune = items.some(i => i.attune);
+    return { shop, cfg, items, gmView, isGM: game.user.isGM, discountText, discountClass,
+      filters: this.filters, typeOptions, rarityOptions, anyAttune };
   }
 
   _onRender(context, options) {
@@ -121,13 +142,65 @@ export class ShopWindow extends HandlebarsApplicationMixin(ApplicationV2) {
     if (options?.isFirstRender) Hooks.callAll(`${MODULE_ID}.windowChanged`);
     const el = this.element;
     // GM inputs
-    el.querySelectorAll("input[name]").forEach(input => input.addEventListener("change", ev => this.#onInput(ev)));
+    el.querySelectorAll(".sw-gm-bar input[name], .sw-items input[name]").forEach(input => input.addEventListener("change", ev => this.#onInput(ev)));
+    // Search & filters (client-side, no re-render so the search box keeps focus)
+    const bar = el.querySelector(".sw-filters");
+    if (bar) {
+      bar.addEventListener("input", ev => this.#onFilter(ev));
+      bar.addEventListener("change", ev => this.#onFilter(ev));
+      bar.querySelector("[data-clear]")?.addEventListener("click", () => {
+        this.filters = { search: "", type: "", attune: "", rarity: "", inStock: false, sort: "default" };
+        bar.querySelectorAll("input[type=search]").forEach(i => i.value = "");
+        bar.querySelectorAll("select").forEach(s => s.value = s.name === "sort" ? "default" : "");
+        bar.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = false);
+        this.#applyFilters();
+      });
+    }
+    this.#applyFilters();
     // Drag & drop: GM adds stock, players offer items for sale
     if (!this._dropBound) {
       this._dropBound = true;
       el.addEventListener("dragover", ev => ev.preventDefault());
       el.addEventListener("drop", ev => this.#onDrop(ev));
     }
+  }
+
+  #onFilter(event) {
+    const el = event.target;
+    if (!el.name || !(el.name in this.filters)) return;
+    this.filters[el.name] = el.type === "checkbox" ? el.checked : el.value;
+    this.#applyFilters();
+  }
+
+  /** Show/hide and reorder item rows according to this.filters. */
+  #applyFilters() {
+    const list = this.element?.querySelector(".sw-items");
+    if (!list) return;
+    const f = this.filters;
+    const terms = f.search.toLowerCase().split(/\s+/).filter(Boolean);
+    const rows = [...list.querySelectorAll(".sw-item[data-item-id]")];
+    let visible = 0;
+    for (const row of rows) {
+      const d = row.dataset;
+      const show = terms.every(term => d.search.includes(term))
+        && (!f.type || d.type === f.type)
+        && (!f.rarity || d.rarity === f.rarity)
+        && (!f.attune || (f.attune === "none" ? !d.attune : d.attune === f.attune))
+        && (!f.inStock || d.soldOut !== "true");
+      row.hidden = !show;
+      if (show) visible++;
+    }
+    const by = {
+      default: (a, b) => Number(a.dataset.index) - Number(b.dataset.index),
+      name: (a, b) => a.dataset.name.localeCompare(b.dataset.name),
+      priceAsc: (a, b) => Number(a.dataset.price) - Number(b.dataset.price),
+      priceDesc: (a, b) => Number(b.dataset.price) - Number(a.dataset.price)
+    }[f.sort] ?? (() => 0);
+    rows.sort(by).forEach(r => list.append(r));
+    const none = list.querySelector(".sw-no-match");
+    if (none) { none.hidden = visible > 0 || !rows.length; list.append(none); }
+    const count = this.element.querySelector("[data-count]");
+    if (count) count.textContent = rows.length ? t("Filter.Count", { shown: visible, total: rows.length }) : "";
   }
 
   async #onInput(event) {

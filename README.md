@@ -32,6 +32,12 @@ You can drag items from the sidebar, a compendium or another sheet onto the wind
 
 When players haggle, change the shop discount or the item discount. Players see the old price struck through next to the new price.
 
+## Search & filters
+
+Above the shelf there's a search box (searches names and descriptions), filters for item type, rarity and attunement, sorting by name or price, and an "In stock" toggle. Filters stay set while the shop updates.
+
+Items that require attunement carry a purple **Requires attunement** badge; rarity is shown next to the item type.
+
 ## Buying (players)
 
 Click **Buy** next to an item to open the buy dialog:

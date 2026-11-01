@@ -106,7 +106,10 @@
       "Accepts": "Accepts:",
       "AcceptGold": "Gold",
       "AcceptTrades": "Items (trades)",
-      "TradeOnly": "Trades only"
+      "TradeOnly": "Trades only",
+      "AttuneRequired": "Requires attunement",
+      "AttuneOptional": "Attunement optional",
+      "AttuneRequiredHint": "Needs a free attunement slot (max. 3) to use its magic."
     },
     "Notify": {
       "Bought": "{item} added to {actor}.",
@@ -189,6 +192,26 @@
       "ManyOpen": "{n} shops open",
       "Manage": "Open the GM view of this shop",
       "CloseAll": "Close all shops"
+    },
+    "Filter": {
+      "Search": "Search items…",
+      "Type": "Item type",
+      "AllTypes": "All types",
+      "Rarity": "Rarity",
+      "AllRarities": "All rarities",
+      "Attunement": "Attunement",
+      "AttuneAny": "Attunement: any",
+      "AttuneRequired": "Requires attunement",
+      "AttuneNone": "No attunement",
+      "Sort": "Sort",
+      "SortDefault": "Sort: shop order",
+      "SortName": "Sort: name",
+      "SortPriceAsc": "Sort: price ↑",
+      "SortPriceDesc": "Sort: price ↓",
+      "InStock": "In stock",
+      "Clear": "Clear search and filters",
+      "Count": "{shown} of {total}",
+      "NoMatch": "Nothing matches your search."
     }
   }
 }

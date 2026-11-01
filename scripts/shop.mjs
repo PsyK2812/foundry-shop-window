@@ -51,6 +51,26 @@ export function priceCp(shop, item, qty = 1) {
   return applyDiscounts(baseUnitCp(item) * qty, [s.discount, i.discount]);
 }
 
+/**
+ * Attunement state of an item: "required", "optional" or "".
+ * Handles dnd5e 3+ strings and the older numeric values (1 = required, 2 = attuned).
+ */
+export function attunementOf(item) {
+  const a = item?.system?.attunement;
+  if (a === "required" || a === 1 || a === 2) return "required";
+  if (a === "optional") return "optional";
+  return "";
+}
+
+/** Localized rarity label, or "" for mundane items. */
+export function rarityOf(item) {
+  const r = item?.system?.rarity;
+  if (!r) return { key: "", label: "" };
+  const cfg = CONFIG.DND5E?.itemRarity?.[r];
+  const label = typeof cfg === "string" ? cfg : cfg?.label ?? r;
+  return { key: r, label: game.i18n.localize(label) };
+}
+
 /** Units the shop can still sell (Infinity when unlimited). */
 export function stockOf(item) {
   if (itemConfig(item).unlimited) return Infinity;

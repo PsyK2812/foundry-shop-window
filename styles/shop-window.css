@@ -390,3 +390,81 @@
   margin-top: .2rem; width: 100%; height: 30px;
   background: #a33; color: #fff; border: 1px solid #611; border-radius: 4px; font-weight: bold;
 }
+
+/* Search & filter bar */
+.sw-filters {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem;
+  padding: .45rem .8rem;
+  background: #3d2614;
+  border-bottom: 1px solid rgba(0,0,0,.4);
+  color: var(--sw-parchment);
+  font-size: .85rem;
+}
+.sw-filters .sw-search {
+  flex: 1 1 160px;
+  display: flex; align-items: center; gap: .35rem;
+  background: var(--sw-parchment);
+  border: 1px solid var(--sw-wood-dark);
+  border-radius: 4px;
+  padding: 0 .45rem;
+  color: var(--sw-ink);
+}
+.sw-filters .sw-search input {
+  flex: 1; border: none; background: transparent; box-shadow: none; outline: none;
+  height: 26px; color: var(--sw-ink); padding: 0;
+}
+.sw-filters select {
+  flex: 0 1 auto; width: auto; height: 28px;
+  background: var(--sw-parchment); color: var(--sw-ink);
+  border: 1px solid var(--sw-wood-dark); border-radius: 4px;
+  font-size: .8rem;
+}
+.sw-filters select option { background: var(--sw-parchment); color: var(--sw-ink); }
+.sw-filters .sw-instock { display: flex; align-items: center; gap: .3rem; white-space: nowrap; }
+.sw-filters .sw-clear {
+  flex: 0 0 28px; width: 28px; height: 28px; padding: 0; line-height: 1;
+  background: var(--sw-parchment-dark); color: var(--sw-ink); border: 1px solid var(--sw-wood-dark);
+}
+.sw-filters .sw-count { margin-left: auto; opacity: .75; font-style: italic; white-space: nowrap; }
+.sw-filters input[type=checkbox] {
+  appearance: none; -webkit-appearance: none;
+  flex: 0 0 18px; width: 18px; height: 18px; margin: 0;
+  border: 2px solid var(--sw-parchment-dark); border-radius: 3px;
+  background: var(--sw-parchment);
+  display: inline-grid; place-content: center; cursor: pointer;
+}
+.sw-filters input[type=checkbox]::before {
+  content: ""; width: 10px; height: 10px;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background: var(--sw-ink); transform: scale(0); transition: transform .1s ease-in-out;
+}
+.sw-filters input[type=checkbox]:checked { background: var(--sw-gold); border-color: var(--sw-gold); }
+.sw-filters input[type=checkbox]:checked::before { transform: scale(1); }
+.sw-filters input[type=checkbox]::after { display: none; }
+.sw-item[hidden], .sw-no-match[hidden] { display: none !important; }
+
+/* Attunement & rarity */
+.sw-attune {
+  align-self: flex-start;
+  margin-top: .15rem;
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .05rem .5rem;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: bold;
+  color: #fff;
+  background: #6b3fa0;
+  border: 1px solid #45276b;
+  white-space: nowrap;
+}
+.sw-attune.optional { background: transparent; color: #6b3fa0; }
+.sw-rarity { font-weight: bold; }
+.sw-rarity.rarity-uncommon { color: #2e7d32; }
+.sw-rarity.rarity-rare { color: #1f5fbf; }
+.sw-rarity.rarity-veryRare { color: #7b3fb2; }
+.sw-rarity.rarity-legendary { color: #c06a00; }
+.sw-rarity.rarity-artifact { color: #a33; }
